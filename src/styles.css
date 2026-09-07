@@ -753,3 +753,10 @@ td input { width: 76px; text-align: right; }
   padding-top: var(--s4);
   border-top: 1px solid var(--rand);
 }
+
+/* Mehrzeilige Eingabefelder folgen denselben Regeln wie einzeilige. */
+.feld textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.45;
+}

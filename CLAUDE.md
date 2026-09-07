@@ -178,6 +178,14 @@ Strecke und Airline. Der Abgleich ersetzt nie einen vorhandenen Eintrag — er
 ergänzt nur leere Korrekturwerte und macht aus einem geplanten einen geflogenen
 Flug. Von Hand Eingetragenes bleibt unangetastet.
 
+**Weiter automatisieren geht nicht — gemessen, nicht vermutet.** Der Endpunkt
+sendet CORS-Freigaben ausschließlich für `https://www.miles-and-more.com`; von
+der Steigflug-Adresse kommt `401` ganz ohne CORS-Kopfzeilen zurück. Ein Abruf
+aus der App heraus ist damit unmöglich, und serverseitig ginge es nur mit
+hinterlegten Zugangsdaten — genau das, was diese App vermeiden soll. Die
+Handgriffe lassen sich nur verkürzen: Einfügefeld statt Datei, dazu ein
+Lesezeichen, das auf der Miles-&-More-Seite selbst läuft.
+
 Der Endpunkt liefert **geflogene** Segmente. Gebuchte Reisen in der Zukunft
 stehen dort nicht; die bleiben Handarbeit.
 
