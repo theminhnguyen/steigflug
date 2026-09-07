@@ -504,3 +504,17 @@ describe('Verlauf kennzeichnet geplante Schritte', () => {
     expect(v.map((x) => x.geplant)).toEqual([false, true, true])
   })
 })
+
+describe('Airlines aus echten Kontodaten', () => {
+  it('gibt Lufthansa City Airlines Qualifying Points', () => {
+    // Aus dem echten Konto belegt: VL-Flüge wurden mit 20 Punkten gutgeschrieben.
+    // Die Airline fehlte im Regelwerk und hätte null QP ergeben.
+    expect(punkteFuerFlug(R, flug({ airline: 'VL' }))).toEqual({ points: 20, qp: 20 })
+  })
+
+  it('gibt allen vollintegrierten Airlines aus den Kontodaten Qualifying Points', () => {
+    for (const code of ['LH', 'LX', 'OS', 'EW', 'VL', 'SN', 'EN', 'AZ', 'OU', 'LO', 'LG', '4Y']) {
+      expect(punkteFuerFlug(R, flug({ airline: code })).qp, code).toBe(20)
+    }
+  })
+})

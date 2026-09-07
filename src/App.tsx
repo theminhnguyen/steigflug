@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { AppDaten } from './core/types'
 import { lade, speichere } from './store/store'
+import { jahrVon } from './core/calc'
 import { BASIS_REGELWERK, findeZiel, mitOverrides } from './rules'
 import Cockpit from './components/Cockpit'
 import Fluege from './components/Fluege'
@@ -44,11 +45,22 @@ export default function App() {
 
   const konto = useKonto(daten, setDaten)
 
+  /**
+   * Auswahl der Jahre: das laufende samt Umfeld — und jedes Jahr, für das
+   * überhaupt etwas eingetragen ist. Ohne den zweiten Teil bleiben ältere
+   * Einträge unerreichbar; nach einem Import der eigenen Flughistorie reicht
+   * die durchaus mehrere Jahre zurück.
+   */
   const jahre = useMemo(() => {
     const jetzt = new Date().getFullYear()
-    const liste = [jetzt - 1, jetzt, jetzt + 1, jetzt + 2, jetzt + 3]
-    return liste.includes(daten.zieljahr) ? liste : [...liste, daten.zieljahr].sort()
-  }, [daten.zieljahr])
+    const alle = new Set([jetzt - 1, jetzt, jetzt + 1, jetzt + 2, jetzt + 3, daten.zieljahr])
+    for (const e of [...daten.fluege, ...daten.boden]) {
+      if (e.geloescht) continue
+      const jahr = jahrVon(e.datum)
+      if (Number.isFinite(jahr) && jahr > 2000 && jahr < 2100) alle.add(jahr)
+    }
+    return [...alle].sort((a, b) => b - a)
+  }, [daten.zieljahr, daten.fluege, daten.boden])
 
   return (
     <div className="huelle">
@@ -66,6 +78,7 @@ export default function App() {
           value={daten.zieljahr}
           onChange={(e) => {
             const jahr = Number(e.target.value)
+            if (!Number.isFinite(jahr) || jahr < 2000 || jahr > 2100) return
             setDaten((d) => ({ ...d, zieljahr: jahr }))
           }}
           title="Kalenderjahr, auf das qualifiziert wird"

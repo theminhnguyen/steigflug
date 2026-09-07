@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-07b",
+  "version": "2026-09-07c",
   "stand": "7. September 2026",
   "hinweis": "Miles & More ändert die Bedingungen regelmäßig. Alle Werte hier sind in der App unter „Regelwerk“ überschreibbar, ohne dass Code geändert werden muss.",
   "quellen": [
@@ -22,6 +22,10 @@
     {
       "titel": "Marriott Bonvoy × Miles & More — Bedingungen und FAQ (Originalquelle)",
       "url": "https://travel-partner.marriott.com/miles-and-more/de-de/faqs"
+    },
+    {
+      "titel": "Welche Flüge zählen für den Status (Miles & More Hilfe)",
+      "url": "https://www.miles-and-more.com/de/de/general-information/help-and-contact/help/status-relevant-flights-and-segments.html"
     }
   ],
   "ziele": [
@@ -80,6 +84,10 @@
     {
       "code": "LH",
       "name": "Lufthansa"
+    },
+    {
+      "code": "VL",
+      "name": "Lufthansa City Airlines"
     },
     {
       "code": "LX",

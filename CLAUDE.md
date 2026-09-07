@@ -181,6 +181,25 @@ Flug. Von Hand Eingetragenes bleibt unangetastet.
 Der Endpunkt liefert **geflogene** Segmente. Gebuchte Reisen in der Zukunft
 stehen dort nicht; die bleiben Handarbeit.
 
+## Was echte Kontodaten aufgedeckt haben
+
+Am 2026-09-07 zum ersten Mal gegen die echte Flughistorie geprüft (28 Segmente,
+2023–2026). Zwei Fehler, die kein selbstgebauter Testfall gefunden hätte:
+
+- **Lufthansa City Airlines (`VL`) fehlte im Regelwerk.** Eine Lufthansa-Tochter,
+  vollintegriert — das Konto schrieb 20 Qualifying Points gut, die App hätte null
+  gerechnet. Beim Ergänzen des Regelwerks die offizielle Liste gegenprüfen, nicht
+  aus dem Gedächtnis.
+- **Die Jahresauswahl bot nur das laufende Jahr samt Umfeld an.** Eine importierte
+  Historie reicht Jahre weiter zurück; diese Jahre waren schlicht unerreichbar.
+  Die Auswahl leitet sich jetzt aus den vorhandenen Einträgen ab.
+
+**Zu `GupPoints`:** In allen 28 Zeilen identisch mit `StatusPoints`. Das ist mit
+der Deutung „Qualifying Points“ vereinbar, beweist sie aber nicht — sämtliche
+Airlines in den Daten sind vollintegriert, dort sind beide Werte ohnehin gleich.
+Ein Gegenbeweis bräuchte einen Flug mit einer nur teilintegrierten Airline
+(Star-Alliance-Partner). Bis dahin bleibt der Schalter in der Vorschau.
+
 ## Sprache
 
 Bezeichner, Kommentare und Oberfläche auf Deutsch. Fachbegriffe des Programms
