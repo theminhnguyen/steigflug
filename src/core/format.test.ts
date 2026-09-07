@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { datum, datumKurz, menge, zahl } from './format'
+import { datum, datumKurz, menge, zahl, zahlAusFeld } from './format'
 
 describe('menge', () => {
   it('setzt Einzahl bei genau eins', () => {
@@ -38,5 +38,27 @@ describe('datum', () => {
   it('kommt mit leeren und kaputten Werten klar', () => {
     expect(datum('')).toBe('—')
     expect(datum('unsinn')).toBe('unsinn')
+  })
+})
+
+describe('zahlAusFeld', () => {
+  it('lässt gültige Zahlen durch', () => {
+    expect(zahlAusFeld('42')).toBe(42)
+    expect(zahlAusFeld('0')).toBe(0)
+  })
+
+  it('fängt negative Eingaben ab', () => {
+    expect(zahlAusFeld('-7')).toBe(0)
+  })
+
+  it('fängt unbrauchbare Eingaben ab, statt NaN durchzureichen', () => {
+    expect(zahlAusFeld('')).toBe(0)
+    expect(zahlAusFeld('e')).toBe(0)
+    expect(zahlAusFeld('abc')).toBe(0)
+  })
+
+  it('achtet auf eine abweichende Untergrenze', () => {
+    expect(zahlAusFeld('0', 1)).toBe(1)
+    expect(zahlAusFeld('5', 1)).toBe(5)
   })
 })

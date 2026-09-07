@@ -59,9 +59,26 @@ describe('schaetzeStrecke', () => {
     expect(schaetzeStrecke('fra', 'jfk').strecke).toBe('interkontinental')
   })
 
-  it('meldet unsicher bei unbekanntem Code', () => {
+  it('meldet unsicher bei unbekanntem Code — an beiden Enden', () => {
     expect(schaetzeStrecke('FRA', 'XXX').sicher).toBe(false)
+    expect(schaetzeStrecke('XXX', 'FRA').sicher).toBe(false)
+    expect(schaetzeStrecke('XXX', 'YYY').sicher).toBe(false)
+    expect(schaetzeStrecke('', 'FRA').sicher).toBe(false)
+    expect(schaetzeStrecke('FRA', '').sicher).toBe(false)
     expect(schaetzeStrecke('', '').sicher).toBe(false)
+  })
+
+  it('markiert den Grenzfall unabhängig von der Flugrichtung', () => {
+    expect(schaetzeStrecke('FRA', 'IST').grenzfall).toBe(true)
+    expect(schaetzeStrecke('IST', 'FRA').grenzfall).toBe(true)
+  })
+
+  it('behandelt zwei Randlagen untereinander als Kurzstrecke', () => {
+    expect(schaetzeStrecke('IST', 'TLV').strecke).toBe('kontinental')
+  })
+
+  it('setzt keinen Grenzfall, wenn beide Flughäfen in Kerneuropa liegen', () => {
+    expect(schaetzeStrecke('FRA', 'MAD').grenzfall).toBe(false)
   })
 })
 

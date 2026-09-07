@@ -60,7 +60,10 @@ export default function App() {
         <select
           id="zieljahr"
           value={daten.zieljahr}
-          onChange={(e) => setDaten({ ...daten, zieljahr: Number(e.target.value) })}
+          onChange={(e) => {
+            const jahr = Number(e.target.value)
+            setDaten((d) => ({ ...d, zieljahr: jahr }))
+          }}
           title="Kalenderjahr, auf das qualifiziert wird"
         >
           {jahre.map((j) => (
@@ -72,7 +75,10 @@ export default function App() {
 
         <select
           value={daten.zielStatus}
-          onChange={(e) => setDaten({ ...daten, zielStatus: e.target.value })}
+          onChange={(e) => {
+            const status = e.target.value
+            setDaten((d) => ({ ...d, zielStatus: status }))
+          }}
           title="Angestrebter Status"
         >
           {regelwerk.ziele.map((z) => (

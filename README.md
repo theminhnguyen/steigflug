@@ -74,7 +74,7 @@ Diese Anpassungen liegen in den Nutzerdaten und überleben ein Update.
 ```bash
 npm install
 npm run dev      # Entwicklungsserver
-npm test         # 63 Tests über Rechenkern, Flughafendaten und Speicherung
+npm test         # 91 Tests über Rechenkern, Flughafendaten, Formate und Speicherung
 npm run build    # Produktionsbau nach dist/
 npm run deploy   # Bau und Veröffentlichung auf GitHub Pages
 ```

@@ -329,3 +329,117 @@ describe('Realfall: Economy plus Boden-Punkte', () => {
     expect(l.erreicht).toBe(false)
   })
 })
+
+describe('Jahresränder — beide Seiten', () => {
+  it('nimmt den ersten UND den letzten Tag des Zieljahres mit', () => {
+    const d = daten({
+      fluege: [flug({ datum: '2027-01-01' }), flug({ datum: '2027-12-31' })],
+    })
+    expect(berechneBilanz(R, d, 'plan').anzahlFluege).toBe(2)
+  })
+
+  it('schließt den Tag davor UND den Tag danach aus', () => {
+    const d = daten({
+      fluege: [flug({ datum: '2026-12-31' }), flug({ datum: '2028-01-01' })],
+    })
+    expect(berechneBilanz(R, d, 'plan').anzahlFluege).toBe(0)
+  })
+
+  it('grenzt Boden-Einträge an beiden Rändern genauso ab', () => {
+    const d = daten({
+      boden: [
+        boden({ datum: '2026-12-31' }),
+        boden({ datum: '2027-01-01' }),
+        boden({ datum: '2027-12-31' }),
+        boden({ datum: '2028-01-01' }),
+      ],
+    })
+    expect(berechneBilanz(R, d, 'plan').gesamt.points).toBe(80)
+  })
+})
+
+describe('Deckelung genau an der Grenze', () => {
+  it('zählt exakt das Limit noch voll und meldet kein Übersteigen', () => {
+    const d = daten({ boden: [boden({ anzahl: 3 })] })
+    const m = berechneBilanz(R, d, 'plan').proQuelle.find((q) => q.quelle.id === 'marriott')!
+    expect(m.punkte.points).toBe(120)
+    expect(m.limitErreicht).toBe(true)
+    expect(m.ueberLimit).toBe(false)
+    expect(m.einheitenFrei).toBe(0)
+  })
+
+  it('kappt die erste Einheit über der Grenze', () => {
+    const d = daten({ boden: [boden({ anzahl: 4 })] })
+    const m = berechneBilanz(R, d, 'plan').proQuelle.find((q) => q.quelle.id === 'marriott')!
+    expect(m.punkte.points).toBe(120)
+    expect(m.ueberLimit).toBe(true)
+  })
+
+  it('zählt eine Einheit unter der Grenze noch vollständig', () => {
+    const d = daten({ boden: [boden({ anzahl: 2 })] })
+    const m = berechneBilanz(R, d, 'plan').proQuelle.find((q) => q.quelle.id === 'marriott')!
+    expect(m.punkte.points).toBe(80)
+    expect(m.limitErreicht).toBe(false)
+    expect(m.einheitenFrei).toBe(1)
+  })
+})
+
+describe('Ziel exakt auf der Schwelle', () => {
+  it('gilt bei punktgenauem Erreichen als geschafft', () => {
+    const d = daten({
+      // 32 Kurzstrecken = 640 P, dazu ein eVoucher = 50 P/50 QP -> 690/690
+      fluege: Array.from({ length: 32 }, () => flug()),
+      boden: [boden({ quelle: 'evoucher', anzahl: 1, datum: '2027-12-01' })],
+    })
+    const l = berechneLuecke(berechneBilanz(R, d, 'plan'), FTL)
+    expect(l.erreicht).toBe(true)
+  })
+
+  it('gilt einen Punkt darunter noch nicht als geschafft', () => {
+    const d = daten({
+      fluege: Array.from({ length: 32 }, () => flug()),
+      boden: [boden({ quelle: 'sonstiges', anzahl: 9, freieQp: 9, datum: '2027-12-01' })],
+    })
+    const b = berechneBilanz(R, d, 'plan')
+    expect(b.gesamt.points).toBe(649)
+    expect(berechneLuecke(b, FTL).erreicht).toBe(false)
+  })
+})
+
+describe('Tempo-Hochrechnung an den Rändern', () => {
+  it('rechnet ein abgelaufenes Jahr nicht über hundert Prozent hinaus', () => {
+    const d = daten({ fluege: Array.from({ length: 10 }, () => flug({ datum: '2027-06-01' })) })
+    const b = berechneBilanz(R, d, 'ist')
+    const t = berechneTempo(b, 2027, new Date('2029-05-05'))
+    expect(t.hochrechnungPoints).toBe(200)
+  })
+
+  it('liefert am 31. Dezember genau den Ist-Stand', () => {
+    const d = daten({ fluege: Array.from({ length: 5 }, () => flug({ datum: '2027-06-01' })) })
+    const b = berechneBilanz(R, d, 'ist')
+    expect(berechneTempo(b, 2027, new Date('2027-12-31')).hochrechnungPoints).toBe(100)
+  })
+})
+
+describe('flugVorschlaege bei einseitiger Lücke', () => {
+  it('rechnet richtig, wenn nur noch Points fehlen', () => {
+    const v = flugVorschlaege(R, { points: 100, qp: 0, erreicht: false })
+    expect(v.find((x) => x.klasse === 'economy' && x.strecke === 'kontinental')!.segmente).toBe(5)
+  })
+
+  it('rechnet richtig, wenn nur noch Qualifying Points fehlen', () => {
+    const v = flugVorschlaege(R, { points: 0, qp: 100, erreicht: false })
+    expect(v.find((x) => x.klasse === 'economy' && x.strecke === 'kontinental')!.segmente).toBe(5)
+  })
+})
+
+describe('Verlauf bei gleichem Datum', () => {
+  it('summiert mehrere Einträge desselben Tages auf', () => {
+    const d = daten({
+      fluege: [flug({ datum: '2027-05-01' }), flug({ datum: '2027-05-01' })],
+    })
+    const v = berechneVerlauf(R, d, FTL, 'plan')
+    expect(v).toHaveLength(2)
+    expect(v[1]!.points).toBe(40)
+  })
+})

@@ -60,3 +60,11 @@ export interface Punkte {
 }
 
 export const NULL_PUNKTE: Punkte = { points: 0, qp: 0 }
+
+/**
+ * Zustandsänderungen laufen ausschließlich über eine Funktion des vorherigen
+ * Standes. Ein Objekt entgegenzunehmen wäre bequemer, führt aber dazu, dass zwei
+ * schnell aufeinanderfolgende Klicks beide vom selben veralteten Stand ausgehen
+ * und die erste Änderung verlorengeht. Der Typ verhindert das erst gar nicht.
+ */
+export type SetDaten = (aendern: (bisher: AppDaten) => AppDaten) => void

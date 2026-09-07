@@ -1,17 +1,26 @@
 import { useRef, useState } from 'react'
-import type { AppDaten } from '../core/types'
-import { alsJson, dateiname, leereDaten, normalisiere } from '../store/store'
-import { zahl } from '../core/format'
+import type { AppDaten, SetDaten } from '../core/types'
+import {
+  alsJson,
+  dateiname,
+  hatEintraege,
+  istSicherung,
+  leereDaten,
+  normalisiere,
+  ohneGueltigesDatum,
+} from '../store/store'
+import { menge, zahl } from '../core/format'
 
 interface Props {
   daten: AppDaten
-  setDaten: (d: AppDaten) => void
+  setDaten: SetDaten
 }
 
 export default function Daten({ daten, setDaten }: Props) {
   const dateiFeld = useRef<HTMLInputElement>(null)
   const [meldung, setMeldung] = useState<{ art: 'gut' | 'fehler'; text: string } | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
+  const [wartend, setWartend] = useState<{ daten: AppDaten; datei: string } | null>(null)
 
   function exportieren() {
     const blob = new Blob([alsJson(daten)], { type: 'application/json' })
@@ -27,19 +36,38 @@ export default function Daten({ daten, setDaten }: Props) {
     setMeldung({ art: 'gut', text: `Gesichert als ${dateiname(daten)}.` })
   }
 
+  function uebernehmen(eingelesen: AppDaten) {
+    setDaten(() => eingelesen)
+    setWartend(null)
+    setMeldung({
+      art: 'gut',
+      text: `${menge(eingelesen.fluege.length, 'Flug', 'Flüge')} und ${menge(eingelesen.boden.length, 'Boden-Eintrag', 'Boden-Einträge')} übernommen.`,
+    })
+  }
+
   async function importieren(datei: File) {
     try {
-      const text = await datei.text()
-      const eingelesen = normalisiere(JSON.parse(text), daten.zieljahr)
-      setDaten(eingelesen)
-      setMeldung({
-        art: 'gut',
-        text: `${zahl(eingelesen.fluege.length)} Flüge und ${zahl(eingelesen.boden.length)} Boden-Einträge übernommen.`,
-      })
+      const roh: unknown = JSON.parse(await datei.text())
+      if (!istSicherung(roh)) {
+        setMeldung({
+          art: 'fehler',
+          text: `„${datei.name}“ ist keine Steigflug-Sicherung. Es wurde nichts geändert.`,
+        })
+        return
+      }
+      const eingelesen = normalisiere(roh, daten.zieljahr)
+      // Bestehende Einträge nie ohne Rückfrage überschreiben — der Import
+      // ersetzt alles und lässt sich nicht rückgängig machen.
+      if (hatEintraege(daten)) {
+        setMeldung(null)
+        setWartend({ daten: eingelesen, datei: datei.name })
+      } else {
+        uebernehmen(eingelesen)
+      }
     } catch {
       setMeldung({
         art: 'fehler',
-        text: 'Die Datei konnte nicht gelesen werden. Ist es eine Steigflug-Sicherung?',
+        text: `„${datei.name}“ konnte nicht gelesen werden. Es wurde nichts geändert.`,
       })
     } finally {
       if (dateiFeld.current) dateiFeld.current.value = ''
@@ -79,6 +107,37 @@ export default function Daten({ daten, setDaten }: Props) {
           />
         </div>
 
+        {wartend && (
+          <div className="merker" style={{ marginTop: 16, marginBottom: 0 }}>
+            <span aria-hidden="true">⚠️</span>
+            <div>
+              <b>Bestehende Einträge werden ersetzt</b>
+              Aktuell gespeichert: {menge(daten.fluege.length, 'Flug', 'Flüge')} und{' '}
+              {menge(daten.boden.length, 'Boden-Eintrag', 'Boden-Einträge')}. „
+              {wartend.datei}“ enthält{' '}
+              {menge(wartend.daten.fluege.length, 'Flug', 'Flüge')} und{' '}
+              {menge(wartend.daten.boden.length, 'Boden-Eintrag', 'Boden-Einträge')}. Das Einlesen
+              überschreibt alles und lässt sich nicht rückgängig machen.
+              <div className="knopf-reihe" style={{ marginTop: 12 }}>
+                <button
+                  type="button"
+                  className="knopf haupt"
+                  onClick={() => uebernehmen(wartend.daten)}
+                >
+                  Ersetzen
+                </button>
+                <button
+                  type="button"
+                  className="knopf"
+                  onClick={() => setWartend(null)}
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {meldung && (
           <div className="merker" style={{ marginTop: 16, marginBottom: 0 }}>
             <span aria-hidden="true">{meldung.art === 'gut' ? '✅' : '⚠️'}</span>
@@ -108,6 +167,17 @@ export default function Daten({ daten, setDaten }: Props) {
                 <td>davon geplant</td>
                 <td>{zahl(daten.boden.filter((b) => b.geplant).length)}</td>
               </tr>
+              {ohneGueltigesDatum(daten) > 0 && (
+                <tr>
+                  <td>
+                    Ohne gültiges Datum
+                    <div className="zeile-neben">
+                      Erscheinen in keiner Jahresansicht. Bitte die Sicherung prüfen.
+                    </div>
+                  </td>
+                  <td>{zahl(ohneGueltigesDatum(daten))}</td>
+                </tr>
+              )}
               <tr>
                 <td>Eigene Regel-Anpassungen</td>
                 <td>{Object.keys(daten.regelwerkOverrides).length > 0 ? 'ja' : 'nein'}</td>
@@ -131,7 +201,7 @@ export default function Daten({ daten, setDaten }: Props) {
                 className="knopf haupt"
                 style={{ background: 'var(--warn)', borderColor: 'var(--warn)' }}
                 onClick={() => {
-                  setDaten(leereDaten(daten.zieljahr))
+                  setDaten((d) => leereDaten(d.zieljahr))
                   setLoeschBestaetigung(false)
                   setMeldung({ art: 'gut', text: 'Alle Daten wurden gelöscht.' })
                 }}

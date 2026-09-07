@@ -1,12 +1,12 @@
-import type { AppDaten, KlassenId, Strecke } from '../core/types'
+import type { AppDaten, KlassenId, SetDaten, Strecke } from '../core/types'
 import type { Regelwerk } from '../rules'
 import { BASIS_REGELWERK } from '../rules'
-import { zahl } from '../core/format'
+import { zahl, zahlAusFeld } from '../core/format'
 
 interface Props {
   regelwerk: Regelwerk
   daten: AppDaten
-  setDaten: (d: AppDaten) => void
+  setDaten: SetDaten
 }
 
 const STRECKEN: { id: Strecke; name: string }[] = [
@@ -18,14 +18,32 @@ export default function Regeln({ regelwerk, daten, setDaten }: Props) {
   const ov = daten.regelwerkOverrides
   const geaendert = Object.keys(ov).length > 0
 
+  /**
+   * Übernimmt einen Wert aus einem Zahlenfeld. Ein leeres Feld darf keine
+   * Schwelle auf null setzen — sonst gilt das Ziel schlagartig als erreicht,
+   * nur weil jemand zum Tippen erst die Ziffern gelöscht hat.
+   */
+  function setzeZahl(
+    pfad: 'ziele' | 'flugPunkte',
+    schluessel: string,
+    feld: string,
+    roh: string,
+  ) {
+    if (roh.trim() === '') return
+    setzeOverride(pfad, schluessel, { [feld]: zahlAusFeld(roh) })
+  }
+
   function setzeOverride(pfad: 'ziele' | 'flugPunkte' | 'bodenQuellen', schluessel: string, wert: object) {
-    const bisher = (ov[pfad] as Record<string, object> | undefined) ?? {}
-    setDaten({
-      ...daten,
-      regelwerkOverrides: {
-        ...ov,
-        [pfad]: { ...bisher, [schluessel]: { ...(bisher[schluessel] ?? {}), ...wert } },
-      },
+    setDaten((d) => {
+      const alle = d.regelwerkOverrides
+      const bisher = (alle[pfad] as Record<string, object> | undefined) ?? {}
+      return {
+        ...d,
+        regelwerkOverrides: {
+          ...alle,
+          [pfad]: { ...bisher, [schluessel]: { ...(bisher[schluessel] ?? {}), ...wert } },
+        },
+      }
     })
   }
 
@@ -61,9 +79,8 @@ export default function Regeln({ regelwerk, daten, setDaten }: Props) {
                       inputMode="numeric"
                       value={z.points}
                       aria-label={`${z.name}: Points`}
-                      onChange={(e) =>
-                        setzeOverride('ziele', z.id, { points: Number(e.target.value) })
-                      }
+                      min={0}
+                      onChange={(e) => setzeZahl('ziele', z.id, 'points', e.target.value)}
                     />
                   </td>
                   <td>
@@ -72,10 +89,9 @@ export default function Regeln({ regelwerk, daten, setDaten }: Props) {
                       inputMode="numeric"
                       value={z.qualifyingPoints}
                       aria-label={`${z.name}: Qualifying Points`}
+                      min={0}
                       onChange={(e) =>
-                        setzeOverride('ziele', z.id, {
-                          qualifyingPoints: Number(e.target.value),
-                        })
+                        setzeZahl('ziele', z.id, 'qualifyingPoints', e.target.value)
                       }
                     />
                   </td>
@@ -113,8 +129,9 @@ export default function Regeln({ regelwerk, daten, setDaten }: Props) {
                         inputMode="numeric"
                         value={regelwerk.flugPunkte[k.id as KlassenId]?.[s.id] ?? 0}
                         aria-label={`${k.name}, ${s.name}`}
+                        min={0}
                         onChange={(e) =>
-                          setzeOverride('flugPunkte', k.id, { [s.id]: Number(e.target.value) })
+                          setzeZahl('flugPunkte', k.id, s.id, e.target.value)
                         }
                       />
                     </td>
@@ -173,9 +190,13 @@ export default function Regeln({ regelwerk, daten, setDaten }: Props) {
                       placeholder="kein Limit"
                       value={q.maxPointsProJahr ?? ''}
                       aria-label={`${q.name}: Jahreslimit`}
+                      min={0}
                       onChange={(e) =>
                         setzeOverride('bodenQuellen', q.id, {
-                          maxPointsProJahr: e.target.value === '' ? null : Number(e.target.value),
+                          maxPointsProJahr:
+                            e.target.value.trim() === ''
+                              ? null
+                              : zahlAusFeld(e.target.value),
                         })
                       }
                     />
@@ -216,7 +237,7 @@ export default function Regeln({ regelwerk, daten, setDaten }: Props) {
             <button
               type="button"
               className="knopf"
-              onClick={() => setDaten({ ...daten, regelwerkOverrides: {} })}
+              onClick={() => setDaten((d) => ({ ...d, regelwerkOverrides: {} }))}
             >
               Eigene Anpassungen verwerfen
             </button>

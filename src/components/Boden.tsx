@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import type { AppDaten, BodenEintrag } from '../core/types'
+import type { AppDaten, BodenEintrag, SetDaten } from '../core/types'
 import type { Regelwerk } from '../rules'
 import { findeBodenQuelle } from '../rules'
 import { berechneBilanz, jahrVon, maxEinheiten, punkteFuerEinheiten } from '../core/calc'
-import { datumKurz, heuteIso, menge, zahl } from '../core/format'
+import { datumKurz, heuteIso, menge, zahl, zahlAusFeld } from '../core/format'
 import { neueId } from '../store/store'
 
 interface Props {
   regelwerk: Regelwerk
   daten: AppDaten
-  setDaten: (d: AppDaten) => void
+  setDaten: SetDaten
 }
 
 function leererEintrag(jahr: number, quelle: string): BodenEintrag {
@@ -39,9 +39,17 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
   const imJahr = daten.boden
     .filter((b) => jahrVon(b.datum) === daten.zieljahr)
     .sort((a, b) => b.datum.localeCompare(a.datum))
+  const andereJahre = daten.boden.length - imJahr.length
 
   const vorschau = punkteFuerEinheiten(quelle, entwurf.anzahl, entwurf.freieQp)
-  const vollstaendig = Boolean(entwurf.datum) && entwurf.anzahl > 0
+  // Der Grund fürs Sperren wird mitgeführt, damit er neben dem Knopf stehen kann:
+  // ein stummer, ausgegrauter Knopf wird als kaputtes Feature wahrgenommen.
+  const fehlt = !entwurf.datum
+    ? 'Bitte ein Datum wählen.'
+    : !Number.isFinite(entwurf.anzahl) || entwurf.anzahl <= 0
+      ? `Bitte eine Anzahl größer als null eintragen (${quelle.freieEingabe ? 'Points' : quelle.einheitPlural}).`
+      : null
+  const vollstaendig = fehlt === null
 
   function zuruecksetzen() {
     setEntwurf(leererEintrag(daten.zieljahr, entwurf.quelle))
@@ -50,10 +58,14 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
 
   function speichern() {
     if (!vollstaendig) return
-    const boden = bearbeitet
-      ? daten.boden.map((b) => (b.id === bearbeitet ? entwurf : b))
-      : [...daten.boden, entwurf]
-    setDaten({ ...daten, boden })
+    setDaten((d) => ({
+      ...d,
+      boden: bearbeitet
+        ? d.boden.map((b) => (b.id === bearbeitet ? entwurf : b))
+        : d.boden.some((b) => b.id === entwurf.id)
+          ? d.boden
+          : [...d.boden, entwurf],
+    }))
     zuruecksetzen()
   }
 
@@ -64,7 +76,7 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
   }
 
   function loeschen(id: string) {
-    setDaten({ ...daten, boden: daten.boden.filter((b) => b.id !== id) })
+    setDaten((d) => ({ ...d, boden: d.boden.filter((b) => b.id !== id) }))
     if (bearbeitet === id) zuruecksetzen()
   }
 
@@ -130,7 +142,9 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
                 min={quelle.freieEingabe ? 0 : 1}
                 step={1}
                 value={entwurf.anzahl}
-                onChange={(e) => setEntwurf({ ...entwurf, anzahl: Number(e.target.value) })}
+                onChange={(e) =>
+                  setEntwurf({ ...entwurf, anzahl: zahlAusFeld(e.target.value) })
+                }
               />
               {!quelle.freieEingabe && (
                 <span className="hinweis">
@@ -153,7 +167,9 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
                   min={0}
                   step={1}
                   value={entwurf.freieQp}
-                  onChange={(e) => setEntwurf({ ...entwurf, freieQp: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setEntwurf({ ...entwurf, freieQp: zahlAusFeld(e.target.value) })
+                  }
                 />
               </div>
             )}
@@ -195,6 +211,13 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
             />
           </div>
 
+          {quelle.freieEingabe && entwurf.freieQp > entwurf.anzahl && (
+            <span className="hinweis warn" style={{ fontSize: 12.5 }}>
+              Qualifying Points sind eine Teilmenge der Points und können nicht darüber
+              liegen.
+            </span>
+          )}
+
           <div className="aussage" style={{ margin: 0 }}>
             <strong>
               {zahl(vorschau.points)} Points
@@ -222,6 +245,11 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
               </button>
             )}
           </div>
+          {fehlt && (
+            <span className="hinweis" style={{ color: 'var(--text-leise)', fontSize: 12.5 }}>
+              {fehlt}
+            </span>
+          )}
         </div>
       </section>
 
@@ -256,8 +284,17 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
 
       <section className="karte">
         <h2>Einträge {daten.zieljahr}</h2>
+        {andereJahre > 0 && (
+          <p className="unter">
+            {menge(andereJahre, 'Eintrag liegt', 'Einträge liegen')} in anderen Jahren.
+          </p>
+        )}
         {imJahr.length === 0 ? (
-          <div className="leer">Noch keine Boden-Punkte eingetragen.</div>
+          <div className="leer">
+            {andereJahre > 0
+              ? `Für ${daten.zieljahr} ist nichts eingetragen. Deine übrigen Einträge sind nicht verloren — stelle oben rechts das Jahr um.`
+              : 'Noch keine Boden-Punkte eingetragen.'}
+          </div>
         ) : (
           <div className="liste">
             {imJahr.map((b) => {

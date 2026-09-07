@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { alsJson, leereDaten, neueId, normalisiere } from './store'
+import {
+  alsJson,
+  hatEintraege,
+  istSicherung,
+  leereDaten,
+  neueId,
+  normalisiere,
+  ohneGueltigesDatum,
+} from './store'
 
 describe('normalisiere', () => {
   it('macht aus Unsinn saubere Leerdaten', () => {
@@ -53,5 +61,65 @@ describe('Export', () => {
   it('lässt sich verlustfrei wieder einlesen', () => {
     const d = leereDaten(2027)
     expect(normalisiere(JSON.parse(alsJson(d)), 2027).zieljahr).toBe(2027)
+  })
+})
+
+describe('istSicherung', () => {
+  it('erkennt eine echte Sicherung', () => {
+    expect(istSicherung({ schema: 1, fluege: [], boden: [] })).toBe(true)
+    expect(istSicherung({ fluege: [{ von: 'FRA' }] })).toBe(true)
+  })
+
+  it('weist fremde Dateien ab, statt sie zu Leerdaten zu glätten', () => {
+    expect(istSicherung({ foo: 1 })).toBe(false)
+    expect(istSicherung([1, 2, 3])).toBe(false)
+    expect(istSicherung('text')).toBe(false)
+    expect(istSicherung(null)).toBe(false)
+    expect(istSicherung({ fluege: 'keine Liste' })).toBe(false)
+  })
+})
+
+describe('hatEintraege', () => {
+  it('erkennt leere und gefüllte Bestände', () => {
+    const leer = leereDaten(2027)
+    expect(hatEintraege(leer)).toBe(false)
+    expect(hatEintraege({ ...leer, fluege: [{} as never] })).toBe(true)
+    expect(hatEintraege({ ...leer, boden: [{} as never] })).toBe(true)
+  })
+})
+
+describe('normalisiere begrenzt unplausible Werte', () => {
+  it('lässt keine negativen Korrekturen durch', () => {
+    const d = normalisiere({ fluege: [{ korrekturPoints: -50, korrekturQp: -5 }] }, 2027)
+    expect(d.fluege[0]!.korrekturPoints).toBe(0)
+    expect(d.fluege[0]!.korrekturQp).toBe(0)
+  })
+
+  it('lässt keine negativen Mengen durch', () => {
+    const d = normalisiere({ boden: [{ anzahl: -3, freieQp: -1 }] }, 2027)
+    expect(d.boden[0]!.anzahl).toBe(0)
+    expect(d.boden[0]!.freieQp).toBe(0)
+  })
+
+  it('verwirft NaN und Unendlich in Korrekturen', () => {
+    const d = normalisiere({ fluege: [{ korrekturPoints: Number.POSITIVE_INFINITY }] }, 2027)
+    expect(d.fluege[0]!.korrekturPoints).toBeNull()
+  })
+})
+
+describe('ohneGueltigesDatum', () => {
+  it('findet Einträge, die in keiner Jahresansicht auftauchen', () => {
+    const d = normalisiere(
+      {
+        fluege: [{ datum: '2027-05-01' }, { datum: '' }, { datum: 'irgendwas' }],
+        boden: [{ datum: '2027-05-01' }, { datum: '2027-13' }],
+      },
+      2027,
+    )
+    expect(ohneGueltigesDatum(d)).toBe(3)
+  })
+
+  it('meldet null, wenn alle Daten sauber sind', () => {
+    expect(ohneGueltigesDatum(leereDaten(2027))).toBe(0)
   })
 })

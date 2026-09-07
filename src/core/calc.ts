@@ -282,7 +282,10 @@ export function berechneTempo(
   const start = new Date(Date.UTC(zieljahr, 0, 1))
   const ende = new Date(Date.UTC(zieljahr, 11, 31))
   const jetzt = heute < start ? start : heute > ende ? ende : heute
-  const vergangeneTage = Math.max(1, (jetzt.getTime() - start.getTime()) / 86_400_000)
+  // Beide Zeiträume einschließlich zählen: Am 1. Januar ist ein Tag vergangen,
+  // am 31. Dezember das ganze Jahr. Ohne das +1 rechnet die Hochrechnung am
+  // Jahresende über den tatsächlichen Stand hinaus.
+  const vergangeneTage = (jetzt.getTime() - start.getTime()) / 86_400_000 + 1
   const jahresTage = (ende.getTime() - start.getTime()) / 86_400_000 + 1
 
   const proTag = bilanz.gesamt.points / vergangeneTage

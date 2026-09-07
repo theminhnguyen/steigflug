@@ -49,8 +49,10 @@ export function normalisiere(roh: unknown, fallbackJahr: number): AppDaten {
         strecke: f.strecke ?? 'kontinental',
         streckeManuell: Boolean(f.streckeManuell),
         geplant: Boolean(f.geplant),
-        korrekturPoints: typeof f.korrekturPoints === 'number' ? f.korrekturPoints : null,
-        korrekturQp: typeof f.korrekturQp === 'number' ? f.korrekturQp : null,
+        // Eine Sicherung kann von Hand bearbeitet worden sein. Negative
+        // Gutschriften gibt es nicht — sonst zöge ein Flug Punkte ab.
+        korrekturPoints: nichtNegativ(f.korrekturPoints),
+        korrekturQp: nichtNegativ(f.korrekturQp),
         notiz: f.notiz ?? '',
       }),
     ),
@@ -59,8 +61,8 @@ export function normalisiere(roh: unknown, fallbackJahr: number): AppDaten {
         id: b.id ?? neueId(),
         datum: b.datum ?? '',
         quelle: b.quelle ?? 'sonstiges',
-        anzahl: Number(b.anzahl) || 0,
-        freieQp: Number(b.freieQp) || 0,
+        anzahl: Math.max(0, Number(b.anzahl) || 0),
+        freieQp: Math.max(0, Number(b.freieQp) || 0),
         geplant: Boolean(b.geplant),
         notiz: b.notiz ?? '',
       }),
@@ -70,6 +72,10 @@ export function normalisiere(roh: unknown, fallbackJahr: number): AppDaten {
         ? (d.regelwerkOverrides as Record<string, unknown>)
         : {},
   }
+}
+
+function nichtNegativ(wert: unknown): number | null {
+  return typeof wert === 'number' && Number.isFinite(wert) ? Math.max(0, wert) : null
 }
 
 export function lade(fallbackJahr: number): AppDaten {
@@ -100,4 +106,34 @@ export function alsJson(daten: AppDaten): string {
 export function dateiname(daten: AppDaten): string {
   const heute = new Date().toISOString().slice(0, 10)
   return `steigflug-${daten.zieljahr}-${heute}.json`
+}
+
+/**
+ * Prüft, ob ein eingelesenes Objekt überhaupt eine Steigflug-Sicherung ist.
+ * Ohne diese Hürde würde eine versehentlich gewählte fremde JSON-Datei von
+ * `normalisiere` klaglos zu Leerdaten geglättet — und dabei den gesamten
+ * Bestand des Nutzers überschreiben.
+ */
+export function istSicherung(roh: unknown): boolean {
+  if (!roh || typeof roh !== 'object' || Array.isArray(roh)) return false
+  const d = roh as Record<string, unknown>
+  return Array.isArray(d.fluege) || Array.isArray(d.boden)
+}
+
+/** Ob überhaupt etwas drinsteht, das beim Überschreiben verloren ginge. */
+export function hatEintraege(daten: AppDaten): boolean {
+  return daten.fluege.length > 0 || daten.boden.length > 0
+}
+
+/**
+ * Einträge, deren Datum sich keinem Kalenderjahr zuordnen lässt. Sie tauchen in
+ * keiner Jahresansicht auf und wären sonst unsichtbar — eine Sicherung kann von
+ * Hand bearbeitet worden sein.
+ */
+export function ohneGueltigesDatum(daten: AppDaten): number {
+  const ungueltig = (d: string) => !/^\d{4}-\d{2}-\d{2}$/.test(d)
+  return (
+    daten.fluege.filter((f) => ungueltig(f.datum)).length +
+    daten.boden.filter((b) => ungueltig(b.datum)).length
+  )
 }

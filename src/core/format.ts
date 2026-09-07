@@ -32,3 +32,14 @@ export function heuteIso(): string {
   const p = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
+
+/**
+ * Liest einen Wert aus einem Zahlenfeld. Browser lassen in `type="number"`
+ * auch „e“, „+“ und Minuszeichen zu; daraus darf weder NaN noch ein negativer
+ * Punktestand entstehen.
+ */
+export function zahlAusFeld(wert: string, mindestens = 0): number {
+  const n = Number(wert)
+  if (!Number.isFinite(n)) return mindestens
+  return Math.max(mindestens, n)
+}

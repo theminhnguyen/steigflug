@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react'
-import type { AppDaten, Flug, KlassenId, Strecke } from '../core/types'
+import type { AppDaten, Flug, KlassenId, SetDaten, Strecke } from '../core/types'
 import type { Regelwerk } from '../rules'
 import { alleAirlines, istQualifyingAirline } from '../rules'
 import { jahrVon, punkteFuerFlug } from '../core/calc'
 import { AIRPORTS, airportLabel, schaetzeStrecke } from '../data/airports'
-import { datumKurz, heuteIso, menge, zahl } from '../core/format'
+import { datumKurz, heuteIso, menge, zahl, zahlAusFeld } from '../core/format'
 import { neueId } from '../store/store'
 
 interface Props {
   regelwerk: Regelwerk
   daten: AppDaten
-  setDaten: (d: AppDaten) => void
+  setDaten: SetDaten
 }
 
 function leererFlug(jahr: number): Flug {
@@ -37,6 +37,13 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
   const [zeigeKorrektur, setZeigeKorrektur] = useState(false)
 
   const airlines = useMemo(() => alleAirlines(regelwerk), [regelwerk])
+  // Ein Code aus einer von Hand bearbeiteten Sicherung steht in keiner Liste.
+  // Ohne eigenen Eintrag zeigte das Auswahlfeld dann die erste Airline an,
+  // während gespeichert etwas anderes bliebe.
+  const unbekannteAirline =
+    entwurf.airline && !airlines.some((a) => a.code === entwurf.airline)
+      ? entwurf.airline
+      : null
 
   const imJahr = daten.fluege
     .filter((f) => jahrVon(f.datum) === daten.zieljahr)
@@ -71,10 +78,16 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
       von: entwurf.von.toUpperCase(),
       nach: entwurf.nach.toUpperCase(),
     }
-    const fluege = bearbeitet
-      ? daten.fluege.map((f) => (f.id === bearbeitet ? flug : f))
-      : [...daten.fluege, flug]
-    setDaten({ ...daten, fluege })
+    setDaten((d) => ({
+      ...d,
+      fluege: bearbeitet
+        ? d.fluege.map((f) => (f.id === bearbeitet ? flug : f))
+        // Zwei schnelle Klicks landen im selben React-Durchlauf. Über die ID
+        // bleibt das Anlegen idempotent, statt den Flug doppelt einzutragen.
+        : d.fluege.some((f) => f.id === flug.id)
+          ? d.fluege
+          : [...d.fluege, flug],
+    }))
 
     if (danach === 'rueckflug') {
       setEntwurf({ ...flug, id: neueId(), von: flug.nach, nach: flug.von })
@@ -92,7 +105,7 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
   }
 
   function loeschen(id: string) {
-    setDaten({ ...daten, fluege: daten.fluege.filter((f) => f.id !== id) })
+    setDaten((d) => ({ ...d, fluege: d.fluege.filter((f) => f.id !== id) }))
     if (bearbeitet === id) zuruecksetzen()
   }
 
@@ -172,6 +185,13 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
                       </option>
                     ))}
                 </optgroup>
+                {unbekannteAirline && (
+                  <optgroup label="Aus der Sicherung übernommen">
+                    <option value={unbekannteAirline}>
+                      {unbekannteAirline} (unbekannter Code)
+                    </option>
+                  </optgroup>
+                )}
                 <optgroup label="Nur Points, keine QP">
                   {airlines
                     .filter((a) => !a.qualifying)
@@ -270,9 +290,11 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
                   inputMode="numeric"
                   placeholder={String(regelwerk.flugPunkte[entwurf.klasse]?.[entwurf.strecke] ?? 0)}
                   value={entwurf.korrekturPoints ?? ''}
+                  min={0}
                   onChange={(e) =>
                     aendere({
-                      korrekturPoints: e.target.value === '' ? null : Number(e.target.value),
+                      korrekturPoints:
+                        e.target.value === '' ? null : zahlAusFeld(e.target.value),
                     })
                   }
                 />
@@ -284,9 +306,10 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
                   type="number"
                   inputMode="numeric"
                   value={entwurf.korrekturQp ?? ''}
+                  min={0}
                   onChange={(e) =>
                     aendere({
-                      korrekturQp: e.target.value === '' ? null : Number(e.target.value),
+                      korrekturQp: e.target.value === '' ? null : zahlAusFeld(e.target.value),
                     })
                   }
                 />
@@ -364,15 +387,18 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
       <section className="karte">
         <h2>Flüge {daten.zieljahr}</h2>
         <p className="unter">
-          {imJahr.length === 0
-            ? 'Noch nichts eingetragen.'
-            : `${menge(imJahr.length, 'Segment', 'Segmente')}${andereJahre > 0 ? ` · ${zahl(andereJahre)} weitere in anderen Jahren` : ''}`}
+          {menge(imJahr.length, 'Segment', 'Segmente')}
+          {/* Auch bei einem leeren Jahr sagen, dass anderswo Einträge liegen —
+              sonst wirkt ein Jahreswechsel wie ein Datenverlust. */}
+          {andereJahre > 0 &&
+            ` · ${menge(andereJahre, 'Segment liegt', 'Segmente liegen')} in anderen Jahren`}
         </p>
 
         {imJahr.length === 0 ? (
           <div className="leer">
-            Trage oben deinen ersten Flug ein — auch geplante Flüge, dann rechnet das
-            Cockpit dir den Termin aus.
+            {andereJahre > 0
+              ? `Für ${daten.zieljahr} ist nichts eingetragen. Deine übrigen Einträge sind nicht verloren — stelle oben rechts das Jahr um.`
+              : 'Trage oben deinen ersten Flug ein — auch geplante Flüge, dann rechnet das Cockpit dir den Termin aus.'}
           </div>
         ) : (
           <div className="liste">
