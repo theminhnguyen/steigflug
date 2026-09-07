@@ -36,7 +36,14 @@ export function jahrVon(isoDatum: string): number {
   return Number(isoDatum.slice(0, 4))
 }
 
-function zaehlt(eintrag: { geplant: boolean; datum: string }, modus: Modus, jahr: number): boolean {
+function zaehlt(
+  eintrag: { geplant: boolean; datum: string; geloescht: boolean },
+  modus: Modus,
+  jahr: number,
+): boolean {
+  // Sanft Gelöschte bleiben für den Abgleich erhalten, dürfen aber in keiner
+  // Rechnung mehr auftauchen. Eine einzige Stelle, damit das nicht auseinanderläuft.
+  if (eintrag.geloescht) return false
   if (jahrVon(eintrag.datum) !== jahr) return false
   return modus === 'plan' || !eintrag.geplant
 }

@@ -6,6 +6,7 @@ import { jahrVon, punkteFuerFlug } from '../core/calc'
 import { AIRPORTS, airportLabel, schaetzeStrecke } from '../data/airports'
 import { datumKurz, heuteIso, menge, zahl, zahlAusFeld } from '../core/format'
 import { neueId } from '../store/store'
+import { alsGeloescht, ohneGeloeschte } from '../sync/merge'
 
 interface Props {
   regelwerk: Regelwerk
@@ -28,6 +29,9 @@ function leererFlug(jahr: number): Flug {
     korrekturPoints: null,
     korrekturQp: null,
     notiz: '',
+    geaendertAm: '',
+    dirty: true,
+    geloescht: false,
   }
 }
 
@@ -45,10 +49,10 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
       ? entwurf.airline
       : null
 
-  const imJahr = daten.fluege
+  const imJahr = ohneGeloeschte(daten.fluege)
     .filter((f) => jahrVon(f.datum) === daten.zieljahr)
     .sort((a, b) => b.datum.localeCompare(a.datum))
-  const andereJahre = daten.fluege.length - imJahr.length
+  const andereJahre = ohneGeloeschte(daten.fluege).length - imJahr.length
 
   const vorschlag = schaetzeStrecke(entwurf.von, entwurf.nach)
   const vorschau = punkteFuerFlug(regelwerk, entwurf)
@@ -77,6 +81,8 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
       ...entwurf,
       von: entwurf.von.toUpperCase(),
       nach: entwurf.nach.toUpperCase(),
+      // Jede Eingabe wartet ab jetzt auf den nächsten Abgleich.
+      dirty: true,
     }
     setDaten((d) => ({
       ...d,
@@ -105,7 +111,11 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
   }
 
   function loeschen(id: string) {
-    setDaten((d) => ({ ...d, fluege: d.fluege.filter((f) => f.id !== id) }))
+    // Sanft löschen: Nur so erfährt ein zweites Gerät beim Abgleich davon.
+    setDaten((d) => ({
+      ...d,
+      fluege: d.fluege.map((f) => (f.id === id ? alsGeloescht(f) : f)),
+    }))
     if (bearbeitet === id) zuruecksetzen()
   }
 

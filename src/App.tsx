@@ -8,6 +8,7 @@ import Boden from './components/Boden'
 import Regeln from './components/Regeln'
 import Daten from './components/Daten'
 import Logo from './components/Logo'
+import { useKonto } from './sync/useKonto'
 
 const REITER = [
   { id: 'cockpit', name: 'Cockpit' },
@@ -39,6 +40,8 @@ export default function App() {
     () => findeZiel(regelwerk, daten.zielStatus),
     [regelwerk, daten.zielStatus],
   )
+
+  const konto = useKonto(daten, setDaten)
 
   const jahre = useMemo(() => {
     const jetzt = new Date().getFullYear()
@@ -72,6 +75,39 @@ export default function App() {
             </option>
           ))}
         </select>
+
+        {!konto.laedtSitzung && (
+          <button
+            type="button"
+            className="kopf-ampel"
+            onClick={() => setReiter('daten')}
+            title={
+              konto.sitzung
+                ? `Angemeldet als ${konto.email}`
+                : 'Nicht angemeldet — Daten nur auf diesem Gerät'
+            }
+          >
+            <span
+              className={`ampel ${
+                !konto.sitzung
+                  ? 'grau'
+                  : konto.zustand === 'fehler'
+                    ? 'rot'
+                    : !konto.online || konto.offen > 0 || konto.zustand === 'laeuft'
+                      ? 'gelb'
+                      : 'gruen'
+              }`}
+              aria-hidden="true"
+            />
+            {konto.sitzung
+              ? konto.zustand === 'laeuft'
+                ? 'gleicht ab'
+                : konto.offen > 0
+                  ? `${konto.offen} offen`
+                  : 'gesichert'
+              : 'nur lokal'}
+          </button>
+        )}
 
         <select
           value={daten.zielStatus}
@@ -133,7 +169,9 @@ export default function App() {
         {reiter === 'regeln' && (
           <Regeln regelwerk={regelwerk} daten={daten} setDaten={setDaten} />
         )}
-        {reiter === 'daten' && <Daten daten={daten} setDaten={setDaten} />}
+        {reiter === 'daten' && (
+          <Daten daten={daten} setDaten={setDaten} konto={konto} />
+        )}
       </main>
 
       <p className="fuss">

@@ -34,6 +34,9 @@ function flug(over: Partial<Flug> = {}): Flug {
     korrekturPoints: null,
     korrekturQp: null,
     notiz: '',
+    geaendertAm: '',
+    dirty: false,
+    geloescht: false,
     ...over,
   }
 }
@@ -47,6 +50,9 @@ function boden(over: Partial<BodenEintrag> = {}): BodenEintrag {
     freieQp: 0,
     geplant: false,
     notiz: '',
+    geaendertAm: '',
+    dirty: false,
+    geloescht: false,
     ...over,
   }
 }
@@ -59,6 +65,7 @@ function daten(over: Partial<AppDaten> = {}): AppDaten {
     fluege: [],
     boden: [],
     regelwerkOverrides: {},
+    einstellungenGesendet: '',
     ...over,
   }
 }
@@ -441,5 +448,31 @@ describe('Verlauf bei gleichem Datum', () => {
     const v = berechneVerlauf(R, d, FTL, 'plan')
     expect(v).toHaveLength(2)
     expect(v[1]!.points).toBe(40)
+  })
+})
+
+describe('Sanft gelöschte Einträge', () => {
+  it('zählen in keiner Bilanz mit', () => {
+    const d = daten({
+      fluege: [flug(), flug({ geloescht: true })],
+      boden: [boden({ anzahl: 2 }), boden({ anzahl: 3, geloescht: true })],
+    })
+    const b = berechneBilanz(R, d, 'plan')
+    expect(b.anzahlFluege).toBe(1)
+    expect(b.gesamt.points).toBe(20 + 80)
+  })
+
+  it('tauchen auch im Verlauf nicht auf', () => {
+    const d = daten({ fluege: [flug({ geloescht: true })] })
+    expect(berechneVerlauf(R, d, FTL, 'plan')).toHaveLength(0)
+  })
+
+  it('verbrauchen kein Jahreslimit', () => {
+    const d = daten({
+      boden: [boden({ anzahl: 3, geloescht: true }), boden({ anzahl: 1 })],
+    })
+    const m = berechneBilanz(R, d, 'plan').proQuelle.find((q) => q.quelle.id === 'marriott')!
+    expect(m.punkte.points).toBe(40)
+    expect(m.limitErreicht).toBe(false)
   })
 })

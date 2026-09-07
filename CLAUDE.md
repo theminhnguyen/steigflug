@@ -73,6 +73,29 @@ gemeldet, nicht als fehlende Eingabe.
 - **Leere Jahresansicht muss auf andere Jahre hinweisen.** Ein blankes „Noch nichts
   eingetragen“ nach einem Jahreswechsel liest sich wie Datenverlust.
 
+## Abgleich mit Supabase
+
+**Lokal zuerst.** `localStorage` ist die Arbeitskopie, Supabase der Abgleich.
+Nie umbauen auf „erst laden, dann anzeigen“ — die App muss ohne Netz vollständig
+funktionieren, bei einer Flug-App ganz besonders.
+
+**Löschen ist immer sanft.** `alsGeloescht()` setzt ein Kennzeichen; echtes
+Entfernen aus der Liste würde die Löschung auf anderen Geräten nie ankommen
+lassen. Alles, was rechnet oder anzeigt, filtert über `ohneGeloeschte()` bzw. den
+`geloescht`-Zweig in `zaehlt()` in `calc.ts`.
+
+**Zeitstempel setzt nur der Server** (Trigger `sf_setze_geaendert_am`). Geräteuhren
+gehen auseinander; ein vom Browser gesetzter Stempel würde beim Zusammenführen
+Einträge verschlucken.
+
+**Die Zusammenführung liegt in `src/sync/merge.ts` und ist frei von Netzwerk.**
+Jede Regel dort hat einen Test. Neue Regeln gehören dorthin, nicht in `sync.ts`.
+
+**Das Projekt ist geteilt.** `einkaufszettel` beherbergt auch Korbi und
+Mediavault. Alle Tabellen und Funktionen dieser App beginnen mit `sf_`. Vor jedem
+neuen Objekt gegen die bestehenden Namen prüfen. Ein eigenes Supabase-Projekt
+geht nicht: Der Free-Tier erlaubt zwei aktive, beide sind belegt.
+
 ## Sprache
 
 Bezeichner, Kommentare und Oberfläche auf Deutsch. Fachbegriffe des Programms

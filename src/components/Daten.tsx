@@ -10,13 +10,17 @@ import {
   ohneGueltigesDatum,
 } from '../store/store'
 import { menge, zahl } from '../core/format'
+import { ohneGeloeschte } from '../sync/merge'
+import type { Konto } from '../sync/useKonto'
+import KontoBereich from './Konto'
 
 interface Props {
   daten: AppDaten
   setDaten: SetDaten
+  konto: Konto
 }
 
-export default function Daten({ daten, setDaten }: Props) {
+export default function Daten({ daten, setDaten, konto }: Props) {
   const dateiFeld = useRef<HTMLInputElement>(null)
   const [meldung, setMeldung] = useState<{ art: 'gut' | 'fehler'; text: string } | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
@@ -76,12 +80,14 @@ export default function Daten({ daten, setDaten }: Props) {
 
   return (
     <>
+      <KontoBereich konto={konto} />
+
       <section className="karte">
         <h2>Sicherung</h2>
         <p className="unter">
-          Deine Daten liegen ausschließlich in diesem Browser — sie verlassen das Gerät
-          nie. Damit sind sie auch weg, wenn du Browserdaten löschst oder das Gerät
-          wechselst. Sichere sie deshalb ab und zu als Datei.
+          {konto.sitzung
+            ? 'Zusätzlich zum Abgleich mit deinem Konto: eine Datei zum Mitnehmen, unabhängig von Google und Supabase.'
+            : 'Ohne Anmeldung liegen deine Daten ausschließlich in diesem Browser — und sind weg, wenn du Browserdaten löschst oder das Gerät wechselst. Sichere sie deshalb ab und zu als Datei.'}
         </p>
 
         <div className="knopf-reihe">
@@ -153,19 +159,19 @@ export default function Daten({ daten, setDaten }: Props) {
             <tbody>
               <tr>
                 <td>Flugsegmente insgesamt</td>
-                <td>{zahl(daten.fluege.length)}</td>
+                <td>{zahl(ohneGeloeschte(daten.fluege).length)}</td>
               </tr>
               <tr>
                 <td>davon geplant</td>
-                <td>{zahl(daten.fluege.filter((f) => f.geplant).length)}</td>
+                <td>{zahl(ohneGeloeschte(daten.fluege).filter((f) => f.geplant).length)}</td>
               </tr>
               <tr>
                 <td>Boden-Einträge insgesamt</td>
-                <td>{zahl(daten.boden.length)}</td>
+                <td>{zahl(ohneGeloeschte(daten.boden).length)}</td>
               </tr>
               <tr>
                 <td>davon geplant</td>
-                <td>{zahl(daten.boden.filter((b) => b.geplant).length)}</td>
+                <td>{zahl(ohneGeloeschte(daten.boden).filter((b) => b.geplant).length)}</td>
               </tr>
               {ohneGueltigesDatum(daten) > 0 && (
                 <tr>

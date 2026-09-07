@@ -4,8 +4,21 @@
 export type KlassenId = 'economy' | 'premium' | 'business' | 'first'
 export type Strecke = 'kontinental' | 'interkontinental'
 
+/**
+ * Felder, die jeder abgleichbare Eintrag mitführt.
+ *
+ * `geaendertAm` setzt ausschließlich der Server. `dirty` heißt: lokal geändert,
+ * noch nicht hochgeladen. `geloescht` ist ein sanftes Löschen — ohne das erführe
+ * ein zweites Gerät nie, dass ein Eintrag verschwunden ist.
+ */
+export interface SyncFelder {
+  geaendertAm: string
+  dirty: boolean
+  geloescht: boolean
+}
+
 /** Ein Flugsegment. Ein Hin- und Rückflug sind zwei Segmente. */
-export interface Flug {
+export interface Flug extends SyncFelder {
   id: string
   /** ISO-Datum, yyyy-mm-dd */
   datum: string
@@ -27,7 +40,7 @@ export interface Flug {
 }
 
 /** Punkte, die nicht aus einem Flug stammen: Marriott, Kreditkarte, Uptrip, … */
-export interface BodenEintrag {
+export interface BodenEintrag extends SyncFelder {
   id: string
   datum: string
   /** verweist auf bodenQuellen[].id im Regelwerk */
@@ -51,6 +64,12 @@ export interface AppDaten {
   boden: BodenEintrag[]
   /** Nutzer-Überschreibungen des Regelwerks, teilweise Struktur */
   regelwerkOverrides: Record<string, unknown>
+  /**
+   * Abbild der zuletzt hochgeladenen Einstellungen als JSON. Weicht der aktuelle
+   * Stand davon ab, müssen sie erneut gesendet werden — das erspart es, an jeder
+   * einzelnen Stelle ein Änderungskennzeichen mitzuführen.
+   */
+  einstellungenGesendet: string
 }
 
 /** Ergebnis einer Punkteberechnung für einen einzelnen Eintrag */

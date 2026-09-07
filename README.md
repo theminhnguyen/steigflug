@@ -3,8 +3,9 @@
 Miles-&-More-Statuspunkte eintragen, automatisch berechnen und ausrechnen lassen,
 wann der Frequent-Traveller-Status voraussichtlich steht.
 
-Läuft komplett im Browser. Keine Anmeldung, kein Server, keine Kosten. Alle Daten
-bleiben auf dem Gerät.
+Läuft komplett im Browser und ohne Kosten. Ohne Anmeldung bleiben alle Daten auf
+dem Gerät; wer will, meldet sich mit Google an und hat dieselben Einträge auf
+iPhone und Rechner. Offline funktioniert die App in beiden Fällen vollständig.
 
 ## Warum es das gibt
 
@@ -32,7 +33,7 @@ Marriott-Aufenthalte etwa zahlen voll auf die 650 ein, aber mit null auf die 325
 - **Boden** — Marriott, Kreditkarte, Uptrip, eVoucher, CO₂-Pakete mit automatischer
   Deckelung auf die Jahreslimits
 - **Regeln** — die komplette Punktetabelle einsehbar und überschreibbar
-- **Daten** — Sicherung als JSON-Datei, Wiedereinlesen, alles löschen
+- **Daten** — Anmeldung, Abgleich-Zustand, Sicherung als JSON-Datei, alles löschen
 
 Geplante Einträge zählen in der Prognose, aber nicht im Ist-Stand. Damit lässt sich
 durchspielen, ob eine Reise oder ein Meilentausch den Status noch rechtzeitig bringt.
@@ -59,6 +60,31 @@ Ein Hin- und Rückflug sind zwei Segmente. Eine Umsteigeverbindung ebenfalls zwe
 | eVoucher | 50 je Voucher | 50 | kein bekanntes |
 | CO₂-Ausgleich | bis +80 % des Fluges | ja | an Flüge gekoppelt |
 
+## Anmeldung und Abgleich
+
+Die Anmeldung ist **optional**. Ohne sie verhält sich die App wie zuvor: alles
+liegt im Browser, nichts verlässt das Gerät.
+
+Mit Google-Anmeldung kommt ein Abgleich mit Supabase dazu — bewusst nach dem
+Muster „lokal zuerst“:
+
+- Eingaben landen immer sofort im Gerät, auch ohne Netz.
+- Der Abgleich läuft im Hintergrund, wenige Sekunden nach der letzten Änderung,
+  und holt nach, sobald die Verbindung zurück ist.
+- Zusammengeführt wird über die Eintrags-ID, nicht über Geräteuhren. Zwei Geräte
+  können unabhängig Flüge anlegen, ohne sich zu überschreiben.
+- Löschungen reisen als Kennzeichen mit (`geloescht`), nicht als fehlende Zeile —
+  sonst erführe das zweite Gerät nie davon.
+- Bei einem Konflikt gewinnt die Fassung, die noch nicht hochgeladen war.
+
+Die Datenbank liegt im geteilten Supabase-Projekt `einkaufszettel` (Free-Tier
+erlaubt nur zwei aktive Projekte, beide sind belegt). Alle Tabellen dieser App
+tragen deshalb das Präfix `sf_`. Row Level Security gibt jeder angemeldeten
+Person ausschließlich ihre eigenen Zeilen.
+
+Einrichtung: siehe [ANMELDUNG-EINRICHTEN.md](ANMELDUNG-EINRICHTEN.md) — ein
+einziger Eintrag im Supabase-Dashboard.
+
 ## Regelwerk pflegen
 
 Miles & More ändert die Bedingungen regelmäßig. Deshalb liegen **alle** Zahlen in
@@ -74,7 +100,7 @@ Diese Anpassungen liegen in den Nutzerdaten und überleben ein Update.
 ```bash
 npm install
 npm run dev      # Entwicklungsserver
-npm test         # 91 Tests über Rechenkern, Flughafendaten, Formate und Speicherung
+npm test         # 108 Tests über Rechenkern, Flughafendaten, Zusammenführung und Speicherung
 npm run build    # Produktionsbau nach dist/
 npm run deploy   # Bau und Veröffentlichung auf GitHub Pages
 ```

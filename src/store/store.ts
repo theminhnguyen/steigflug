@@ -1,4 +1,4 @@
-import type { AppDaten, BodenEintrag, Flug } from '../core/types'
+import type { AppDaten, BodenEintrag, Flug, SyncFelder } from '../core/types'
 
 const SCHLUESSEL = 'steigflug.daten.v1'
 export const SCHEMA_VERSION = 1
@@ -11,6 +11,7 @@ export function leereDaten(zieljahr: number): AppDaten {
     fluege: [],
     boden: [],
     regelwerkOverrides: {},
+    einstellungenGesendet: '',
   }
 }
 
@@ -54,6 +55,7 @@ export function normalisiere(roh: unknown, fallbackJahr: number): AppDaten {
         korrekturPoints: nichtNegativ(f.korrekturPoints),
         korrekturQp: nichtNegativ(f.korrekturQp),
         notiz: f.notiz ?? '',
+        ...syncFelder(f),
       }),
     ),
     boden: boden.map(
@@ -65,12 +67,28 @@ export function normalisiere(roh: unknown, fallbackJahr: number): AppDaten {
         freieQp: Math.max(0, Number(b.freieQp) || 0),
         geplant: Boolean(b.geplant),
         notiz: b.notiz ?? '',
+        ...syncFelder(b),
       }),
     ),
     regelwerkOverrides:
       d.regelwerkOverrides && typeof d.regelwerkOverrides === 'object'
         ? (d.regelwerkOverrides as Record<string, unknown>)
         : {},
+    einstellungenGesendet:
+      typeof d.einstellungenGesendet === 'string' ? d.einstellungenGesendet : '',
+  }
+}
+
+/**
+ * Ergänzt die Abgleich-Felder. Eine Sicherung aus der Zeit vor dem Abgleich
+ * kennt sie nicht — solche Einträge gelten als noch nie hochgeladen und werden
+ * beim ersten Abgleich mitgenommen, statt verlorenzugehen.
+ */
+function syncFelder(e: Partial<SyncFelder>): SyncFelder {
+  return {
+    geaendertAm: typeof e.geaendertAm === 'string' ? e.geaendertAm : '',
+    dirty: e.dirty === undefined ? true : Boolean(e.dirty),
+    geloescht: Boolean(e.geloescht),
   }
 }
 
@@ -122,7 +140,9 @@ export function istSicherung(roh: unknown): boolean {
 
 /** Ob überhaupt etwas drinsteht, das beim Überschreiben verloren ginge. */
 export function hatEintraege(daten: AppDaten): boolean {
-  return daten.fluege.length > 0 || daten.boden.length > 0
+  return (
+    daten.fluege.some((f) => !f.geloescht) || daten.boden.some((b) => !b.geloescht)
+  )
 }
 
 /**
