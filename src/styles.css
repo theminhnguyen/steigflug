@@ -705,3 +705,27 @@ td input { width: 76px; text-align: right; }
   white-space: nowrap;
   max-width: 100%;
 }
+
+/* ---------- Hinweisleiste (neue Fassung) ---------- */
+
+.hinweisleiste {
+  position: sticky;
+  top: var(--s2);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  margin-bottom: var(--s3);
+  border-radius: var(--r2);
+  background: var(--akzent-hell);
+  border: 1px solid color-mix(in srgb, var(--akzent) 30%, transparent);
+  box-shadow: var(--tiefe-2);
+  font-size: 13.5px;
+  flex-wrap: wrap;
+}
+.hinweisleiste > span { flex: none; }
+.hinweisleiste > div:first-of-type { min-width: 0; flex: 1; }
+.hinweisleiste b { display: block; }
+.hinweisleiste span { color: var(--text-2); }
+.hinweisleiste .knopf-reihe { margin-left: auto; }

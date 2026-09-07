@@ -9,7 +9,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' statt 'autoUpdate': Bei autoUpdate übernimmt der neue
+      // Service Worker zwar sofort, die offene Seite läuft aber weiter mit dem
+      // alten Code — man ist stumm eine Fassung hinterher. So wird stattdessen
+      // sichtbar gefragt, und niemandem bricht ein Neuladen die Eingabe ab.
+      registerType: 'prompt',
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'Steigflug – Miles & More Statuspunkte',

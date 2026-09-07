@@ -87,7 +87,7 @@ export default function Daten({ daten, setDaten, konto }: Props) {
         <p className="unter">
           {konto.sitzung
             ? 'Zusätzlich zum Abgleich mit deinem Konto: eine Datei zum Mitnehmen, unabhängig von Google und Supabase.'
-            : 'Ohne Anmeldung liegen deine Daten ausschließlich in diesem Browser — und sind weg, wenn du Browserdaten löschst oder das Gerät wechselst. Sichere sie deshalb ab und zu als Datei.'}
+            : 'Ohne Anmeldung liegen deine Daten ausschließlich in diesem Browser — und sind weg, wenn du Browserdaten löschst oder das Gerät wechselst. Auf dem iPhone kommt dazu, dass Safari die Daten einer Seite nach etwa sieben Tagen ohne Besuch von sich aus löscht. Sichere sie deshalb als Datei, oder melde dich an.'}
         </p>
 
         <div className="knopf-reihe">

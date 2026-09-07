@@ -134,6 +134,28 @@ Die Diagrammfarben sind eigene Schritte je Helligkeitsmodus (`--serie-points`,
 Kontrast. Die Oberflächenakzente sind heller und dafür nicht geeignet — bei einer
 Änderung den Prüfer der dataviz-Fertigkeit erneut laufen lassen, nicht schätzen.
 
+## Aktualisierung der installierten App
+
+`registerType: 'prompt'`, nicht `autoUpdate`. Bei autoUpdate übernimmt der neue
+Service Worker zwar sofort, die geöffnete Seite läuft aber mit dem alten Code
+weiter — man ist stumm eine Fassung hinterher, bis zufällig neu geladen wird.
+Stattdessen meldet `Aktualisierung.tsx` eine neue Fassung sichtbar; geladen wird
+nur auf Tastendruck. Von selbst lädt die App nie neu: ein Neustart mitten in
+einer Eingabe wäre schlimmer als ein Tag Rückstand.
+
+**Beim Prüfen zwei Fallen, in die ich schon getappt bin:**
+1. Ein hinzugefügter *Kommentar* ergibt nach der Minifizierung ein
+   byte-identisches Bündel — es gibt dann gar nichts zu aktualisieren, und der
+   Test scheint fehlzuschlagen, obwohl die Funktion stimmt. Für einen echten
+   Prüflauf eine sichtbare Zeichenkette ändern.
+2. Nach `updateServiceWorker(true)` **nicht sofort** selbst neu laden. Den
+   Neustart macht der Service Worker, sobald er die Steuerung hat; lädt man
+   vorher neu, bedient noch der alte Worker die Anfrage und man bekommt wieder
+   die alte Fassung. Der eigene Rückfall wartet deshalb 2,5 Sekunden.
+
+Der erste Besuch einer Seite wird von keinem Service Worker gesteuert. Ein
+Aktualisierungstest muss vorher zweimal laden, sonst prüft man einen Randfall.
+
 ## Sprache
 
 Bezeichner, Kommentare und Oberfläche auf Deutsch. Fachbegriffe des Programms

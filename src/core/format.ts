@@ -43,3 +43,4 @@ export function zahlAusFeld(wert: string, mindestens = 0): number {
   if (!Number.isFinite(n)) return mindestens
   return Math.max(mindestens, n)
 }
+

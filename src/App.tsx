@@ -9,6 +9,7 @@ import Regeln from './components/Regeln'
 import Daten from './components/Daten'
 import Logo from './components/Logo'
 import { useKonto } from './sync/useKonto'
+import Aktualisierung from './components/Aktualisierung'
 
 const REITER = [
   { id: 'cockpit', name: 'Cockpit' },
@@ -124,6 +125,8 @@ export default function App() {
           ))}
         </select>
       </header>
+
+      <Aktualisierung />
 
       <nav className="reiter">
         {REITER.map((r) => (
