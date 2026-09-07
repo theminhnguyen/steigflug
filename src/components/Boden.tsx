@@ -6,6 +6,7 @@ import { berechneBilanz, jahrVon, maxEinheiten, punkteFuerEinheiten } from '../c
 import { datumKurz, heuteIso, menge, zahl, zahlAusFeld } from '../core/format'
 import { neueId } from '../store/store'
 import { alsGeloescht, ohneGeloeschte } from '../sync/merge'
+import { sortiereFuerAnzeige } from '../core/reihenfolge'
 
 interface Props {
   regelwerk: Regelwerk
@@ -40,9 +41,9 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
   const bilanz = berechneBilanz(regelwerk, daten, 'plan')
   const stand = bilanz.proQuelle.find((q) => q.quelle.id === quelle.id)
 
-  const imJahr = ohneGeloeschte(daten.boden)
-    .filter((b) => jahrVon(b.datum) === daten.zieljahr)
-    .sort((a, b) => b.datum.localeCompare(a.datum))
+  const imJahr = sortiereFuerAnzeige(
+    ohneGeloeschte(daten.boden).filter((b) => jahrVon(b.datum) === daten.zieljahr),
+  )
   const andereJahre = ohneGeloeschte(daten.boden).length - imJahr.length
 
   const vorschau = punkteFuerEinheiten(quelle, entwurf.anzahl, entwurf.freieQp)

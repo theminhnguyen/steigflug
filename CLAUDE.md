@@ -96,6 +96,18 @@ Mediavault. Alle Tabellen und Funktionen dieser App beginnen mit `sf_`. Vor jede
 neuen Objekt gegen die bestehenden Namen prüfen. Ein eigenes Supabase-Projekt
 geht nicht: Der Free-Tier erlaubt zwei aktive, beide sind belegt.
 
+## Reihenfolge in den Listen
+
+`src/core/reihenfolge.ts`: Bevorstehendes zuerst und aufsteigend, Vergangenes
+darunter absteigend. Der nächste Termin gehört nach oben — durchgehend absteigend
+stellte bei lauter Buchungen in der Zukunft die am weitesten entfernte Reise
+ganz nach oben.
+
+Bei gleichem Datum ordnet `ordneSegmente` Flüge nach Reiseverlauf (das Ziel des
+einen ist der Start des nächsten). Sich auf die Stabilität von `Array.sort` zu
+verlassen reicht nicht: Nach einem Abgleich kommt die Reihenfolge aus der
+Zusammenführung und kann eine Umsteigeverbindung verdrehen.
+
 ## Sprache
 
 Bezeichner, Kommentare und Oberfläche auf Deutsch. Fachbegriffe des Programms

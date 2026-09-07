@@ -7,6 +7,7 @@ import { AIRPORTS, airportLabel, schaetzeStrecke } from '../data/airports'
 import { datumKurz, heuteIso, menge, zahl, zahlAusFeld } from '../core/format'
 import { neueId } from '../store/store'
 import { alsGeloescht, ohneGeloeschte } from '../sync/merge'
+import { sortiereSegmente } from '../core/reihenfolge'
 
 interface Props {
   regelwerk: Regelwerk
@@ -49,9 +50,9 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
       ? entwurf.airline
       : null
 
-  const imJahr = ohneGeloeschte(daten.fluege)
-    .filter((f) => jahrVon(f.datum) === daten.zieljahr)
-    .sort((a, b) => b.datum.localeCompare(a.datum))
+  const imJahr = sortiereSegmente(
+    ohneGeloeschte(daten.fluege).filter((f) => jahrVon(f.datum) === daten.zieljahr),
+  )
   const andereJahre = ohneGeloeschte(daten.fluege).length - imJahr.length
 
   const vorschlag = schaetzeStrecke(entwurf.von, entwurf.nach)
