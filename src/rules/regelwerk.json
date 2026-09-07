@@ -1,14 +1,29 @@
 {
-  "version": "2026-09-07",
+  "version": "2026-09-07b",
   "stand": "7. September 2026",
   "hinweis": "Miles & More ändert die Bedingungen regelmäßig. Alle Werte hier sind in der App unter „Regelwerk“ überschreibbar, ohne dass Code geändert werden muss.",
   "quellen": [
-    { "titel": "Miles & More Statusprogramm (meilenoptimieren)", "url": "https://meilenoptimieren.com/miles-and-more-statusprogramm/" },
-    { "titel": "Punkte- und Meilenarten (reisetopia)", "url": "https://reisetopia.de/guides/meilenarten-bei-miles-more/" },
-    { "titel": "Statuspunkte am Boden sammeln (meilenoptimieren)", "url": "https://meilenoptimieren.com/miles-and-more-statuspunkte-am-boden-sammeln/" },
-    { "titel": "Points ohne Flüge sammeln (reisetopia)", "url": "https://reisetopia.de/guides/miles-more-points-ohne-fluege-sammeln/" }
+    {
+      "titel": "Miles & More Statusprogramm (meilenoptimieren)",
+      "url": "https://meilenoptimieren.com/miles-and-more-statusprogramm/"
+    },
+    {
+      "titel": "Punkte- und Meilenarten (reisetopia)",
+      "url": "https://reisetopia.de/guides/meilenarten-bei-miles-more/"
+    },
+    {
+      "titel": "Statuspunkte am Boden sammeln (meilenoptimieren)",
+      "url": "https://meilenoptimieren.com/miles-and-more-statuspunkte-am-boden-sammeln/"
+    },
+    {
+      "titel": "Points ohne Flüge sammeln (reisetopia)",
+      "url": "https://reisetopia.de/guides/miles-more-points-ohne-fluege-sammeln/"
+    },
+    {
+      "titel": "Marriott Bonvoy × Miles & More — Bedingungen und FAQ (Originalquelle)",
+      "url": "https://travel-partner.marriott.com/miles-and-more/de-de/faqs"
+    }
   ],
-
   "ziele": [
     {
       "id": "frequent-traveller",
@@ -25,50 +40,138 @@
       "qualifyingPoints": 1000
     }
   ],
-
   "klassen": [
-    { "id": "economy", "name": "Economy" },
-    { "id": "premium", "name": "Premium Economy" },
-    { "id": "business", "name": "Business" },
-    { "id": "first", "name": "First" }
+    {
+      "id": "economy",
+      "name": "Economy"
+    },
+    {
+      "id": "premium",
+      "name": "Premium Economy"
+    },
+    {
+      "id": "business",
+      "name": "Business"
+    },
+    {
+      "id": "first",
+      "name": "First"
+    }
   ],
-
   "flugPunkte": {
-    "economy":  { "kontinental": 20, "interkontinental": 60 },
-    "premium":  { "kontinental": 20, "interkontinental": 80 },
-    "business": { "kontinental": 40, "interkontinental": 200 },
-    "first":    { "kontinental": 40, "interkontinental": 400 }
+    "economy": {
+      "kontinental": 20,
+      "interkontinental": 60
+    },
+    "premium": {
+      "kontinental": 20,
+      "interkontinental": 80
+    },
+    "business": {
+      "kontinental": 40,
+      "interkontinental": 200
+    },
+    "first": {
+      "kontinental": 40,
+      "interkontinental": 400
+    }
   },
-
   "qualifyingAirlines": [
-    { "code": "LH", "name": "Lufthansa" },
-    { "code": "LX", "name": "SWISS" },
-    { "code": "OS", "name": "Austrian Airlines" },
-    { "code": "SN", "name": "Brussels Airlines" },
-    { "code": "4Y", "name": "Discover Airlines" },
-    { "code": "EW", "name": "Eurowings" },
-    { "code": "EN", "name": "Air Dolomiti" },
-    { "code": "AZ", "name": "ITA Airways" },
-    { "code": "OU", "name": "Croatia Airlines" },
-    { "code": "LO", "name": "LOT Polish Airlines" },
-    { "code": "LG", "name": "Luxair" }
+    {
+      "code": "LH",
+      "name": "Lufthansa"
+    },
+    {
+      "code": "LX",
+      "name": "SWISS"
+    },
+    {
+      "code": "OS",
+      "name": "Austrian Airlines"
+    },
+    {
+      "code": "SN",
+      "name": "Brussels Airlines"
+    },
+    {
+      "code": "4Y",
+      "name": "Discover Airlines"
+    },
+    {
+      "code": "EW",
+      "name": "Eurowings"
+    },
+    {
+      "code": "EN",
+      "name": "Air Dolomiti"
+    },
+    {
+      "code": "AZ",
+      "name": "ITA Airways"
+    },
+    {
+      "code": "OU",
+      "name": "Croatia Airlines"
+    },
+    {
+      "code": "LO",
+      "name": "LOT Polish Airlines"
+    },
+    {
+      "code": "LG",
+      "name": "Luxair"
+    }
   ],
-
   "weitereAirlines": [
-    { "code": "UA", "name": "United Airlines" },
-    { "code": "AC", "name": "Air Canada" },
-    { "code": "TK", "name": "Turkish Airlines" },
-    { "code": "SK", "name": "SAS" },
-    { "code": "TP", "name": "TAP Air Portugal" },
-    { "code": "A3", "name": "Aegean Airlines" },
-    { "code": "SQ", "name": "Singapore Airlines" },
-    { "code": "NH", "name": "ANA" },
-    { "code": "TG", "name": "Thai Airways" },
-    { "code": "ET", "name": "Ethiopian Airlines" },
-    { "code": "MS", "name": "EgyptAir" },
-    { "code": "ZZ", "name": "Andere Airline" }
+    {
+      "code": "UA",
+      "name": "United Airlines"
+    },
+    {
+      "code": "AC",
+      "name": "Air Canada"
+    },
+    {
+      "code": "TK",
+      "name": "Turkish Airlines"
+    },
+    {
+      "code": "SK",
+      "name": "SAS"
+    },
+    {
+      "code": "TP",
+      "name": "TAP Air Portugal"
+    },
+    {
+      "code": "A3",
+      "name": "Aegean Airlines"
+    },
+    {
+      "code": "SQ",
+      "name": "Singapore Airlines"
+    },
+    {
+      "code": "NH",
+      "name": "ANA"
+    },
+    {
+      "code": "TG",
+      "name": "Thai Airways"
+    },
+    {
+      "code": "ET",
+      "name": "Ethiopian Airlines"
+    },
+    {
+      "code": "MS",
+      "name": "EgyptAir"
+    },
+    {
+      "code": "ZZ",
+      "name": "Andere Airline"
+    }
   ],
-
   "bodenQuellen": [
     {
       "id": "marriott",
@@ -78,7 +181,7 @@
       "pointsProEinheit": 40,
       "qpProEinheit": 0,
       "maxPointsProJahr": 120,
-      "hinweis": "40 Points je qualifizierendem Aufenthalt, maximal 3 Aufenthalte pro Kalenderjahr. Liefert KEINE Qualifying Points – reicht also nie allein für den Status. Konten müssen einmalig verknüpft sein. Ob ein Aufenthalt ab einer oder ab zwei Nächten zählt, wird von den Quellen unterschiedlich angegeben."
+      "hinweis": "40 Points je anrechnungsfähigem Aufenthalt, maximal 120 Points pro Kalenderjahr (drei Aufenthalte). Liefert KEINE Qualifying Points – reicht also nie allein für den Status. Ein Aufenthalt sind ALLE aufeinanderfolgenden Nächte im selben Hotel, unabhängig von Check-in und Check-out: Vier Nächte in einem Haus sind ein Aufenthalt, nicht vier. Mindestens eine bezahlte Nacht; mit Punkten bezahlte Prämiennächte zählen nicht. Beide Konten müssen verknüpft sein und derselbe Name hinterlegt sein. Hinweis: Marriott staffelt auf einer Marketingseite 20/40/60 nach Markenkategorie (Moxy und andere Select-Service-Marken unten) – die verbindlichen Bedingungen und die FAQ nennen dagegen einheitlich 40. Weicht deine Gutschrift ab, trage sie über die Quelle „Sonstiges“ mit dem tatsächlichen Wert nach."
     },
     {
       "id": "kk-willkommen",
