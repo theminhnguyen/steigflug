@@ -6,7 +6,22 @@ import { einstellungenAbbild, fuehreZusammen, einstellungenGeaendert } from './m
 
 type Zeile = Record<string, unknown>
 
-function flugZuZeile(f: Flug, userId: string): Zeile {
+/**
+ * Zahlen aus der Datenbank vorsichtig lesen. `Number(undefined)` ergibt NaN, und
+ * ein einziges NaN vergiftet die gesamte Punkterechnung — die App zeigte dann
+ * „NaN Points“. Fehlende oder unbrauchbare Werte werden deshalb abgefangen.
+ */
+function zahlOderNull(wert: unknown): number | null {
+  if (wert === null || wert === undefined || wert === '') return null
+  const n = Number(wert)
+  return Number.isFinite(n) ? n : null
+}
+
+function zahlOderNull0(wert: unknown): number {
+  return zahlOderNull(wert) ?? 0
+}
+
+export function flugZuZeile(f: Flug, userId: string): Zeile {
   return {
     user_id: userId,
     id: f.id,
@@ -36,8 +51,8 @@ export function zeileZuFlug(z: Zeile): Flug {
     strecke: (z.strecke ?? 'kontinental') as Strecke,
     streckeManuell: Boolean(z.strecke_manuell),
     geplant: Boolean(z.geplant),
-    korrekturPoints: z.korrektur_points === null ? null : Number(z.korrektur_points),
-    korrekturQp: z.korrektur_qp === null ? null : Number(z.korrektur_qp),
+    korrekturPoints: zahlOderNull(z.korrektur_points),
+    korrekturQp: zahlOderNull(z.korrektur_qp),
     notiz: String(z.notiz ?? ''),
     geaendertAm: String(z.geaendert_am ?? ''),
     dirty: false,
@@ -45,7 +60,7 @@ export function zeileZuFlug(z: Zeile): Flug {
   }
 }
 
-function bodenZuZeile(b: BodenEintrag, userId: string): Zeile {
+export function bodenZuZeile(b: BodenEintrag, userId: string): Zeile {
   return {
     user_id: userId,
     id: b.id,
@@ -64,8 +79,8 @@ export function zeileZuBoden(z: Zeile): BodenEintrag {
     id: String(z.id),
     datum: String(z.datum ?? ''),
     quelle: String(z.quelle ?? 'sonstiges'),
-    anzahl: Number(z.anzahl ?? 0),
-    freieQp: Number(z.freie_qp ?? 0),
+    anzahl: zahlOderNull0(z.anzahl),
+    freieQp: zahlOderNull0(z.freie_qp),
     geplant: Boolean(z.geplant),
     notiz: String(z.notiz ?? ''),
     geaendertAm: String(z.geaendert_am ?? ''),
@@ -183,7 +198,7 @@ async function gleicheEinstellungenAb(
   if (!data) return {}
 
   const uebernommen: Partial<AppDaten> = {
-    zieljahr: Number(data.zieljahr),
+    zieljahr: zahlOderNull(data.zieljahr) ?? daten.zieljahr,
     zielStatus: String(data.ziel_status),
     regelwerkOverrides: (data.regelwerk_overrides ?? {}) as Record<string, unknown>,
   }

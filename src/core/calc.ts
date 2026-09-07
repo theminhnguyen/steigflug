@@ -8,9 +8,13 @@ export type Modus = 'ist' | 'plan'
 export function punkteFuerFlug(r: Regelwerk, f: Flug): Punkte {
   const basis = r.flugPunkte[f.klasse]?.[f.strecke] ?? 0
   const qualifiziert = istQualifyingAirline(r, f.airline)
+  // Letzte Absicherung gegen NaN: Ein einziger unbrauchbarer Wert würde sonst
+  // jede Summe der App zu NaN machen und alle Balken leeren.
+  const korrektur = (wert: number | null) =>
+    wert !== null && Number.isFinite(wert) ? wert : null
   return {
-    points: f.korrekturPoints ?? basis,
-    qp: f.korrekturQp ?? (qualifiziert ? basis : 0),
+    points: korrektur(f.korrekturPoints) ?? basis,
+    qp: korrektur(f.korrekturQp) ?? (qualifiziert ? basis : 0),
   }
 }
 

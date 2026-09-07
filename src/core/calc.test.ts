@@ -476,3 +476,20 @@ describe('Sanft gelöschte Einträge', () => {
     expect(m.limitErreicht).toBe(false)
   })
 })
+
+describe('Unbrauchbare Werte', () => {
+  it('fällt bei NaN in der Korrektur auf die Berechnung zurück', () => {
+    const f = flug({ korrekturPoints: Number.NaN, korrekturQp: Number.NaN })
+    expect(punkteFuerFlug(R, f)).toEqual({ points: 20, qp: 20 })
+  })
+
+  it('lässt keine unendlichen Werte in die Summe', () => {
+    const d = daten({ fluege: [flug({ korrekturPoints: Number.POSITIVE_INFINITY })] })
+    expect(Number.isFinite(berechneBilanz(R, d, 'plan').gesamt.points)).toBe(true)
+  })
+
+  it('bleibt bei einem kaputten Eintrag für die übrigen richtig', () => {
+    const d = daten({ fluege: [flug({ korrekturPoints: Number.NaN }), flug()] })
+    expect(berechneBilanz(R, d, 'plan').gesamt.points).toBe(40)
+  })
+})

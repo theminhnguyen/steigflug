@@ -4,7 +4,7 @@ import { supabase } from '../supabase/client'
 import { anmeldeRuecksprung } from '../supabase/config'
 import type { AppDaten, SetDaten } from '../core/types'
 import { abgleichen } from './sync'
-import { fuehreZusammen, offeneAenderungen } from './merge'
+import { einstellungenAbbild, fuehreZusammen, offeneAenderungen } from './merge'
 
 export type AbgleichZustand = 'ruht' | 'laeuft' | 'fehler'
 
@@ -23,6 +23,32 @@ export interface Konto {
 }
 
 const LETZTER_ABGLEICH = 'steigflug.letzterAbgleich'
+const ANMELDE_VERSUCH = 'steigflug.anmeldeVersuch'
+
+/** sessionStorage kann in privaten Fenstern werfen — nie die App daran hängen. */
+const merker = {
+  setzen(schluessel: string) {
+    try {
+      sessionStorage.setItem(schluessel, '1')
+    } catch {
+      /* egal */
+    }
+  },
+  vorhanden(schluessel: string): boolean {
+    try {
+      return sessionStorage.getItem(schluessel) !== null
+    } catch {
+      return false
+    }
+  },
+  loeschen(schluessel: string) {
+    try {
+      sessionStorage.removeItem(schluessel)
+    } catch {
+      /* egal */
+    }
+  },
+}
 
 /** Verständliche Meldung statt der englischen Rohmeldung von Supabase. */
 function verstaendlich(meldung: string): string {
@@ -52,6 +78,7 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
     }
   })
   const [online, setOnline] = useState(() => navigator.onLine)
+  const [fehlversuche, setFehlversuche] = useState(0)
 
   // Die Daten stehen in einer Ref, damit der Abgleich nicht bei jeder Eingabe
   // neu erzeugt wird — sonst liefe die Zeitschaltung endlos von vorn los.
@@ -79,6 +106,21 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
     supabase.auth.getSession().then(({ data }) => {
       setSitzung(data.session)
       setLaedtSitzung(false)
+      if (data.session) {
+        merker.loeschen(ANMELDE_VERSUCH)
+      } else if (merker.vorhanden(ANMELDE_VERSUCH)) {
+        // Der Anmeldeversuch ist nie hier angekommen. Das passiert, wenn die
+        // Rücksprungadresse in Supabase fehlt: Dann landet man auf der
+        // Standardadresse des Projekts — bei einer anderen App.
+        merker.loeschen(ANMELDE_VERSUCH)
+        setFehler(
+          'Die Anmeldung kam nicht zu Steigflug zurück. In Supabase fehlt die ' +
+            'Rücksprungadresse https://theminhnguyen.github.io/steigflug/ — ' +
+            'ohne sie leitet Google auf die Standardadresse des Projekts weiter. ' +
+            'Siehe ANMELDUNG-EINRICHTEN.md.',
+        )
+        setZustand('fehler')
+      }
     })
     const { data } = supabase.auth.onAuthStateChange((_ereignis, neue) => {
       setSitzung(neue)
@@ -107,16 +149,38 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
     setZustand('laeuft')
     setFehler(null)
     try {
-      const ergebnis = await abgleichen(datenRef.current, nutzer.id)
+      const vorher = datenRef.current
+      const abbildVorher = einstellungenAbbild(vorher)
+      const ergebnis = await abgleichen(vorher, nutzer.id)
+
       // Während des Netzaufrufs kann weitergetippt worden sein. Deshalb wird das
       // Ergebnis mit dem inzwischen aktuellen Stand zusammengeführt statt ihn zu
       // ersetzen — frische Eingaben gewinnen und gehen beim nächsten Mal mit.
-      setDaten((aktuell) => ({
-        ...aktuell,
-        ...ergebnis.daten,
-        fluege: fuehreZusammen(aktuell.fluege, ergebnis.daten.fluege).lokal,
-        boden: fuehreZusammen(aktuell.boden, ergebnis.daten.boden).lokal,
-      }))
+      setDaten((aktuell) => {
+        // Gilt auch für die Einstellungen: Wer währenddessen das Zieljahr
+        // umstellt, soll es hinterher nicht zurückgesetzt vorfinden.
+        const inzwischenGeaendert = einstellungenAbbild(aktuell) !== abbildVorher
+        const einstellungen = inzwischenGeaendert
+          ? {
+              zieljahr: aktuell.zieljahr,
+              zielStatus: aktuell.zielStatus,
+              regelwerkOverrides: aktuell.regelwerkOverrides,
+              // Bleibt als offen stehen und geht beim nächsten Abgleich mit.
+              einstellungenGesendet: vorher.einstellungenGesendet,
+            }
+          : {
+              zieljahr: ergebnis.daten.zieljahr,
+              zielStatus: ergebnis.daten.zielStatus,
+              regelwerkOverrides: ergebnis.daten.regelwerkOverrides,
+              einstellungenGesendet: ergebnis.daten.einstellungenGesendet,
+            }
+        return {
+          ...aktuell,
+          ...einstellungen,
+          fluege: fuehreZusammen(aktuell.fluege, ergebnis.daten.fluege).lokal,
+          boden: fuehreZusammen(aktuell.boden, ergebnis.daten.boden).lokal,
+        }
+      })
       const jetzt = new Date().toISOString()
       setLetzterAbgleich(jetzt)
       try {
@@ -124,9 +188,11 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
       } catch {
         /* privater Modus — nicht schlimm */
       }
+      setFehlversuche(0)
       setZustand('ruht')
     } catch (e) {
       setFehler(verstaendlich(e instanceof Error ? e.message : String(e)))
+      setFehlversuche((n) => n + 1)
       setZustand('fehler')
     } finally {
       laeuftRef.current = false
@@ -141,11 +207,14 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
   const offen = offeneAenderungen(daten)
 
   // Offene Änderungen nach kurzer Ruhe hochladen, statt bei jedem Tastendruck.
+  // Nach Fehlschlägen wächst die Wartezeit, sonst liefe die App bei einem
+  // dauerhaften Fehler alle 2,5 Sekunden gegen dieselbe Wand.
   useEffect(() => {
     if (!sitzung || !online || offen === 0) return
-    const zeit = window.setTimeout(() => void jetztAbgleichen(), 2500)
+    const wartezeit = 2500 * 2 ** Math.min(fehlversuche, 5)
+    const zeit = window.setTimeout(() => void jetztAbgleichen(), wartezeit)
     return () => window.clearTimeout(zeit)
-  }, [sitzung, online, offen, jetztAbgleichen])
+  }, [sitzung, online, offen, fehlversuche, jetztAbgleichen])
 
   // Zurück im Netz: nachholen.
   useEffect(() => {
@@ -156,11 +225,14 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
 
   const anmelden = useCallback(async () => {
     setFehler(null)
+    setFehlversuche(0)
+    merker.setzen(ANMELDE_VERSUCH)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: anmeldeRuecksprung() },
     })
     if (error) {
+      merker.loeschen(ANMELDE_VERSUCH)
       setFehler(verstaendlich(error.message))
       setZustand('fehler')
     }
@@ -171,6 +243,8 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
     setSitzung(null)
     setZustand('ruht')
     setFehler(null)
+    setFehlversuche(0)
+    merker.loeschen(ANMELDE_VERSUCH)
   }, [])
 
   return {

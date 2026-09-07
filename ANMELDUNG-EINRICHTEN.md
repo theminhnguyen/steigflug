@@ -16,8 +16,15 @@ zurückschicken darf.
 
 3. Speichern. Fertig.
 
-Steht die Adresse dort nicht, führt Google dich nach der Anmeldung auf eine
-fremde Seite (die Standardadresse des Projekts) statt zurück nach Steigflug.
+### Woran du merkst, dass sie fehlt
+
+Genau daran: Nach „Mit Google anmelden“ landest du bei **„Willkommen bei Korbi“**
+und in der Korbi-App. Das ist kein Fehler in Steigflug — Supabase kennt die
+Steigflug-Adresse nicht und nimmt deshalb die Standardadresse des Projekts, und
+die zeigt auf Korbi. Steigflug bekommt die Anmeldung nie zu sehen.
+
+Seit dem letzten Update sagt Steigflug das auch: Kommst du von so einem Versuch
+zurück, steht unter „Daten“ im Klartext, dass die Rücksprungadresse fehlt.
 
 ### Nur falls du lokal testen willst
 
