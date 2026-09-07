@@ -1,0 +1,142 @@
+{
+  "version": "2026-09-07",
+  "stand": "7. September 2026",
+  "hinweis": "Miles & More ändert die Bedingungen regelmäßig. Alle Werte hier sind in der App unter „Regelwerk“ überschreibbar, ohne dass Code geändert werden muss.",
+  "quellen": [
+    { "titel": "Miles & More Statusprogramm (meilenoptimieren)", "url": "https://meilenoptimieren.com/miles-and-more-statusprogramm/" },
+    { "titel": "Punkte- und Meilenarten (reisetopia)", "url": "https://reisetopia.de/guides/meilenarten-bei-miles-more/" },
+    { "titel": "Statuspunkte am Boden sammeln (meilenoptimieren)", "url": "https://meilenoptimieren.com/miles-and-more-statuspunkte-am-boden-sammeln/" },
+    { "titel": "Points ohne Flüge sammeln (reisetopia)", "url": "https://reisetopia.de/guides/miles-more-points-ohne-fluege-sammeln/" }
+  ],
+
+  "ziele": [
+    {
+      "id": "frequent-traveller",
+      "name": "Frequent Traveller",
+      "kuerzel": "FTL",
+      "points": 650,
+      "qualifyingPoints": 325
+    },
+    {
+      "id": "senator",
+      "name": "Senator",
+      "kuerzel": "SEN",
+      "points": 2000,
+      "qualifyingPoints": 1000
+    }
+  ],
+
+  "klassen": [
+    { "id": "economy", "name": "Economy" },
+    { "id": "premium", "name": "Premium Economy" },
+    { "id": "business", "name": "Business" },
+    { "id": "first", "name": "First" }
+  ],
+
+  "flugPunkte": {
+    "economy":  { "kontinental": 20, "interkontinental": 60 },
+    "premium":  { "kontinental": 20, "interkontinental": 80 },
+    "business": { "kontinental": 40, "interkontinental": 200 },
+    "first":    { "kontinental": 40, "interkontinental": 400 }
+  },
+
+  "qualifyingAirlines": [
+    { "code": "LH", "name": "Lufthansa" },
+    { "code": "LX", "name": "SWISS" },
+    { "code": "OS", "name": "Austrian Airlines" },
+    { "code": "SN", "name": "Brussels Airlines" },
+    { "code": "4Y", "name": "Discover Airlines" },
+    { "code": "EW", "name": "Eurowings" },
+    { "code": "EN", "name": "Air Dolomiti" },
+    { "code": "AZ", "name": "ITA Airways" },
+    { "code": "OU", "name": "Croatia Airlines" },
+    { "code": "LO", "name": "LOT Polish Airlines" },
+    { "code": "LG", "name": "Luxair" }
+  ],
+
+  "weitereAirlines": [
+    { "code": "UA", "name": "United Airlines" },
+    { "code": "AC", "name": "Air Canada" },
+    { "code": "TK", "name": "Turkish Airlines" },
+    { "code": "SK", "name": "SAS" },
+    { "code": "TP", "name": "TAP Air Portugal" },
+    { "code": "A3", "name": "Aegean Airlines" },
+    { "code": "SQ", "name": "Singapore Airlines" },
+    { "code": "NH", "name": "ANA" },
+    { "code": "TG", "name": "Thai Airways" },
+    { "code": "ET", "name": "Ethiopian Airlines" },
+    { "code": "MS", "name": "EgyptAir" },
+    { "code": "ZZ", "name": "Andere Airline" }
+  ],
+
+  "bodenQuellen": [
+    {
+      "id": "marriott",
+      "name": "Marriott Bonvoy",
+      "einheit": "Aufenthalt",
+      "einheitPlural": "Aufenthalte",
+      "pointsProEinheit": 40,
+      "qpProEinheit": 0,
+      "maxPointsProJahr": 120,
+      "hinweis": "40 Points je qualifizierendem Aufenthalt, maximal 3 Aufenthalte pro Kalenderjahr. Liefert KEINE Qualifying Points – reicht also nie allein für den Status. Konten müssen einmalig verknüpft sein. Ob ein Aufenthalt ab einer oder ab zwei Nächten zählt, wird von den Quellen unterschiedlich angegeben."
+    },
+    {
+      "id": "kk-willkommen",
+      "name": "Kreditkarte: Willkommensbonus",
+      "einheit": "Bonus",
+      "einheitPlural": "Boni",
+      "pointsProEinheit": 40,
+      "qpProEinheit": 0,
+      "maxPointsProJahr": 40,
+      "hinweis": "Einmalig 40 Points für die Miles & More Gold Credit Card. Wichtig: Der Bonus gilt nur, wenn du zum Zeitpunkt der Beantragung noch KEINEN Vielfliegerstatus hast – also vor dem FTL beantragen. Angebot läuft nach aktuellem Stand bis 31.12.2026."
+    },
+    {
+      "id": "kk-meilentausch",
+      "name": "Kreditkarte: Meilen tauschen",
+      "einheit": "Paket à 5.000 Meilen",
+      "einheitPlural": "Pakete à 5.000 Meilen",
+      "pointsProEinheit": 20,
+      "qpProEinheit": 20,
+      "maxPointsProJahr": 100,
+      "hinweis": "250 Prämienmeilen ergeben 1 Point + 1 Qualifying Point, Umtausch in 5.000er-Schritten. Maximal 25.000 Meilen pro Kalenderjahr = 100 Points + 100 QP. Setzt eine Miles & More Kreditkarte voraus."
+    },
+    {
+      "id": "uptrip",
+      "name": "Uptrip App",
+      "einheit": "Kollektion",
+      "einheitPlural": "Kollektionen",
+      "pointsProEinheit": 20,
+      "qpProEinheit": 20,
+      "maxPointsProJahr": 100,
+      "hinweis": "Bordkarten scannen und Kollektionen vervollständigen: 20 Points + 20 QP je Abschluss. Die erste Kollektion ist kostenlos, weitere kosten je rund 20 Euro. Zum Jahreslimit machen die Quellen unterschiedliche Angaben (100 oder 150) – hier konservativ mit 100 angesetzt."
+    },
+    {
+      "id": "evoucher",
+      "name": "eVoucher tauschen",
+      "einheit": "eVoucher",
+      "einheitPlural": "eVoucher",
+      "pointsProEinheit": 50,
+      "qpProEinheit": 50,
+      "maxPointsProJahr": null,
+      "hinweis": "50 Points + 50 Qualifying Points je eVoucher, kein Jahreslimit bekannt. Setzt voraus, dass du überhaupt eVoucher besitzt."
+    },
+    {
+      "id": "co2",
+      "name": "CO₂-Ausgleichspaket",
+      "einheit": "Punkte",
+      "einheitPlural": "Punkte",
+      "freieEingabe": true,
+      "maxPointsProJahr": null,
+      "hinweis": "An einen tatsächlich geflogenen Flug gekoppelt: bis zu 80 Prozent zusätzliche Points und QP auf diesen Flug. Trage die Punkte hier direkt ein, so wie sie dir gutgeschrieben wurden."
+    },
+    {
+      "id": "sonstiges",
+      "name": "Sonstiges",
+      "einheit": "Punkte",
+      "einheitPlural": "Punkte",
+      "freieEingabe": true,
+      "maxPointsProJahr": null,
+      "hinweis": "Für alles, was hier nicht abgebildet ist – etwa AirRail-Zugsegmente oder Aktionsgutschriften. Punkte direkt eintragen."
+    }
+  ]
+}
