@@ -108,6 +108,32 @@ einen ist der Start des nächsten). Sich auf die Stabilität von `Array.sort` zu
 verlassen reicht nicht: Nach einem Abgleich kommt die Reihenfolge aus der
 Zusammenführung und kann eine Umsteigeverbindung verdrehen.
 
+## Gestaltung
+
+Die Tokens in `src/styles.css` sind die einzige Quelle für Farbe, Abstand, Radius
+und Tiefe. Keine nackten Pixelwerte oder Hex-Farben in Komponenten — Abstände
+kommen aus `--s1`…`--s8`.
+
+**Genau eine Leitzahl je Ansicht** (`.leitzahl`, ≥48px, dieselbe Schrift wie
+alles andere — eine Zier- oder Serifenschrift läse sich als Fremdkörper). Große
+Zahlen mit proportionalen Ziffern; `tabular-nums` nur in Spalten, die untereinander
+fluchten müssen.
+
+**Diagramme** (`src/components/Kurve.tsx`) folgen festen Vorgaben: Linien 2px mit
+runden Enden, Endpunkte ≥8px mit 2px-Ring in Flächenfarbe, Gitter haarfein und
+durchgezogen, Flächenwäsche bei ~10 % Deckkraft. Beschriftet wird sparsam — nur
+die Endwerte, nie jeder Punkt. Text trägt nie die Datenfarbe; die Zuordnung
+kommt aus dem farbigen Zeichen daneben.
+
+**Nie zwei Y-Achsen.** Points und Qualifying Points haben verschiedene Schwellen
+(650 und 325) — deshalb zeigt die Kurve den Anteil am jeweiligen Ziel. Eine
+gemeinsame Skala, eine Ziellinie bei 100 %.
+
+Die Diagrammfarben sind eigene Schritte je Helligkeitsmodus (`--serie-points`,
+`--serie-qp`), geprüft auf Helligkeitsband, Buntheit, Farbfehlsichtigkeit und
+Kontrast. Die Oberflächenakzente sind heller und dafür nicht geeignet — bei einer
+Änderung den Prüfer der dataviz-Fertigkeit erneut laufen lassen, nicht schätzen.
+
 ## Sprache
 
 Bezeichner, Kommentare und Oberfläche auf Deutsch. Fachbegriffe des Programms

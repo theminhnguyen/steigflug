@@ -18,8 +18,10 @@ export default function Balken({ name, ist, plan, ziel, variante = 'points' }: P
         <span className="ziel-name">{name}</span>
         <span className="ziel-zahl">
           <b>{zahl(ist)}</b>
-          {plan > ist && <span> (+{zahl(plan - ist)} geplant)</span>}
-          <span> von {zahl(ziel)}</span>
+          {plan > ist && (
+            <span className="geplant-zusatz"> +{zahl(plan - ist)} geplant</span>
+          )}
+          <span> / {zahl(ziel)}</span>
         </span>
       </div>
       <div

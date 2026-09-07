@@ -9,10 +9,10 @@ import {
   bodenRestKapazitaet,
   erreichtAm,
   flugVorschlaege,
-  punkteFuerEinheiten,
 } from '../core/calc'
 import { datum, menge, zahl } from '../core/format'
 import Balken from './Balken'
+import Kurve from './Kurve'
 
 interface Props {
   regelwerk: Regelwerk
@@ -22,15 +22,20 @@ interface Props {
   aufBoden: () => void
 }
 
+const KURZ_DATUM = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short' })
+
 export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }: Props) {
   const ist = useMemo(() => berechneBilanz(regelwerk, daten, 'ist'), [regelwerk, daten])
   const plan = useMemo(() => berechneBilanz(regelwerk, daten, 'plan'), [regelwerk, daten])
+  const verlauf = useMemo(
+    () => berechneVerlauf(regelwerk, daten, ziel, 'plan'),
+    [regelwerk, daten, ziel],
+  )
 
   const lueckeIst = berechneLuecke(ist, ziel)
   const lueckePlan = berechneLuecke(plan, ziel)
-
   const erreichtIst = erreichtAm(berechneVerlauf(regelwerk, daten, ziel, 'ist'))
-  const erreichtPlan = erreichtAm(berechneVerlauf(regelwerk, daten, ziel, 'plan'))
+  const erreichtPlan = erreichtAm(verlauf)
   const tempo = berechneTempo(ist, daten.zieljahr)
 
   // Was bleibt, wenn alle noch offenen Boden-Quellen ausgeschöpft werden?
@@ -50,39 +55,45 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
   const economyKurz = vorschlaege.find(
     (v) => v.klasse === 'economy' && v.strecke === 'kontinental',
   )
-
-  const anzahlEintraege = daten.fluege.length + daten.boden.length
+  const leer = daten.fluege.length + daten.boden.length === 0
 
   return (
     <>
+      {/* Genau eine Leitzahl je Ansicht. */}
       {lueckeIst.erreicht ? (
-        <div className="aussage erreicht">
-          <strong>Geschafft — {ziel.name} steht.</strong>
+        <section className="aussage erreicht">
+          <div className="leitzahl">
+            <b>{zahl(ist.gesamt.points)}</b>
+            <span className="einheit">Points erreicht</span>
+          </div>
           <p>
-            Die Schwelle war am {datum(erreichtIst ?? '')} erreicht. Der Status gilt für
-            den Rest von {daten.zieljahr} plus das folgende Kalenderjahr plus zwei Monate.
+            {ziel.name} steht seit dem {datum(erreichtIst ?? '')}. Der Status gilt für den
+            Rest von {daten.zieljahr} plus das folgende Kalenderjahr plus zwei Monate.
           </p>
-        </div>
+        </section>
       ) : erreichtPlan ? (
-        <div className="aussage">
-          <strong>Voraussichtlich am {datum(erreichtPlan)}</strong>
+        <section className="aussage">
+          <div className="leitzahl">
+            <b>{KURZ_DATUM.format(new Date(`${erreichtPlan}T12:00:00`))}</b>
+            <span className="einheit">{daten.zieljahr} voraussichtlich {ziel.kuerzel}</span>
+          </div>
           <p>
-            Wenn alle geplanten Flüge und Buchungen so eintreffen, reißt du beide
-            Schwellen an diesem Tag.
+            Wenn alle geplanten Flüge und Buchungen so eintreffen, reißt du an diesem Tag
+            beide Schwellen.
           </p>
-        </div>
+        </section>
       ) : (
-        <div className="aussage">
-          <strong>
-            Noch {zahl(lueckePlan.points)} Points und {zahl(lueckePlan.qp)} Qualifying
-            Points
-          </strong>
+        <section className="aussage">
+          <div className="leitzahl">
+            <b>{zahl(lueckePlan.points)}</b>
+            <span className="einheit">Points fehlen noch</span>
+          </div>
           <p>
-            {anzahlEintraege === 0
+            {leer
               ? `Trage deine Flüge und Boden-Punkte ein, dann rechnet Steigflug dir den voraussichtlichen Termin für ${daten.zieljahr} aus.`
-              : `Mit dem, was aktuell eingetragen und geplant ist, reicht es für ${daten.zieljahr} noch nicht.`}
+              : `Dazu ${zahl(lueckePlan.qp)} Qualifying Points. Mit dem, was eingetragen und geplant ist, reicht es für ${daten.zieljahr} noch nicht.`}
           </p>
-        </div>
+        </section>
       )}
 
       <section className="karte">
@@ -90,8 +101,7 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
           {ziel.name} {daten.zieljahr}
         </h2>
         <p className="unter">
-          Beide Hürden müssen stehen: die Gesamtpunkte und der Anteil an Qualifying
-          Points.
+          Beide Hürden müssen stehen: die Gesamtpunkte und der Anteil an Qualifying Points.
         </p>
 
         <Balken
@@ -109,24 +119,27 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
         />
 
         <div className="legende">
-          <span>
-            <i className="l-ist" /> geflogen / gebucht
-          </span>
-          <span>
-            <i className="l-qp" /> Qualifying Points
-          </span>
-          <span>
-            <i className="l-plan" /> geplant
-          </span>
+          <span><i className="l-ist" /> geflogen / gebucht</span>
+          <span><i className="l-qp" /> Qualifying Points</span>
+          <span><i className="l-plan" /> geplant</span>
         </div>
 
         {tempo.belastbar && !lueckeIst.erreicht && (
-          <p className="unter" style={{ marginTop: 16, marginBottom: 0 }}>
+          <p className="unter" style={{ margin: 'var(--s4) 0 0' }}>
             Im bisherigen Tempo von {daten.zieljahr} landest du zum Jahresende bei rund{' '}
             {zahl(tempo.hochrechnungPoints)} Points und {zahl(tempo.hochrechnungQp)}{' '}
             Qualifying Points — geplante Einträge nicht mitgerechnet.
           </p>
         )}
+      </section>
+
+      <section className="karte">
+        <h2>Der Anstieg über {daten.zieljahr}</h2>
+        <p className="unter">
+          Anteil am jeweiligen Ziel. Beide Reihen auf einer Skala, damit sichtbar wird,
+          welche der zwei Hürden die knappere ist.
+        </p>
+        <Kurve verlauf={verlauf} ziel={ziel} jahr={daten.zieljahr} />
       </section>
 
       {!lueckePlan.erreicht && (
@@ -138,18 +151,14 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
 
           {rest.length > 0 && (
             <>
-              <p style={{ margin: '0 0 9px', fontSize: 14, fontWeight: 550 }}>
-                Ohne einen einzigen weiteren Flug sind noch drin:
-              </p>
-              <div className="liste" style={{ marginBottom: 16 }}>
+              <p className="abschnitt-titel">Ohne einen einzigen weiteren Flug sind noch drin:</p>
+              <div className="liste" style={{ marginBottom: 'var(--s4)' }}>
                 {rest.map((r) => (
                   <div className="zeile" key={r.quelle.id}>
                     <div className="zeile-haupt">
                       <div className="zeile-titel">{r.quelle.name}</div>
                       <div className="zeile-neben">
-                        noch{' '}
-                        {menge(r.einheitenFrei, r.quelle.einheit, r.quelle.einheitPlural)}{' '}
-                        möglich
+                        noch {menge(r.einheitenFrei, r.quelle.einheit, r.quelle.einheitPlural)} möglich
                       </div>
                     </div>
                     <div className="punkte-block">
@@ -168,19 +177,19 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
           )}
 
           {nachBoden.erreicht ? (
-            <div className="merker" style={{ marginTop: 16, marginBottom: 0 }}>
+            <div className="merker" style={{ margin: 'var(--s4) 0 0' }}>
               <span aria-hidden="true">✅</span>
               <div>
                 <b>Ohne weitere Flüge machbar</b>
-                Wenn du die oben genannten Boden-Punkte alle mitnimmst, steht{' '}
-                {ziel.name} auch ohne zusätzliche Flüge.
+                Wenn du die oben genannten Boden-Punkte alle mitnimmst, steht {ziel.name}{' '}
+                auch ohne zusätzliche Flüge.
               </div>
             </div>
           ) : (
             <>
-              <p style={{ margin: '18px 0 9px', fontSize: 14, fontWeight: 550 }}>
-                Danach fehlen noch {zahl(nachBoden.points)} Points und{' '}
-                {zahl(nachBoden.qp)} Qualifying Points — das entspricht:
+              <p className="abschnitt-titel" style={{ marginTop: 'var(--s5)' }}>
+                Danach fehlen noch {zahl(nachBoden.points)} Points und {zahl(nachBoden.qp)}{' '}
+                Qualifying Points — das entspricht:
               </p>
               <div className="tabelle-huelle">
                 <table>
@@ -206,7 +215,7 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
                   </tbody>
                 </table>
               </div>
-              <p className="unter" style={{ marginTop: 10, marginBottom: 14 }}>
+              <p className="unter" style={{ margin: 'var(--s3) 0 var(--s4)' }}>
                 Angaben in Flugsegmenten mit einer der vollintegrierten Airlines. Ein Hin-
                 und Rückflug zählt als zwei Segmente.
                 {economyKurz &&
@@ -219,7 +228,7 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
           )}
 
           {lueckePlan.qp > 0 && bodenMoeglich.qp < lueckePlan.qp && (
-            <div className="merker" style={{ marginTop: 16, marginBottom: 0 }}>
+            <div className="merker" style={{ margin: 'var(--s4) 0 0' }}>
               <span aria-hidden="true">💡</span>
               <div>
                 <b>Qualifying Points sind der Engpass</b>
@@ -248,10 +257,9 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
               <tr>
                 <td>
                   Flüge
-                  <span className="zeile-neben">
-                    {' '}
+                  <div className="zeile-neben">
                     {menge(plan.anzahlFluege, 'Segment', 'Segmente')}
-                  </span>
+                  </div>
                 </td>
                 <td>{zahl(plan.fluege.points)}</td>
                 <td>{zahl(plan.fluege.qp)}</td>
@@ -265,23 +273,17 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
                     <td>{zahl(q.punkte.qp)}</td>
                   </tr>
                 ))}
-              <tr>
-                <td>
-                  <b>Gesamt (inkl. geplant)</b>
-                </td>
-                <td>
-                  <b>{zahl(plan.gesamt.points)}</b>
-                </td>
-                <td>
-                  <b>{zahl(plan.gesamt.qp)}</b>
-                </td>
+              <tr className="summe">
+                <td>Gesamt (inkl. geplant)</td>
+                <td>{zahl(plan.gesamt.points)}</td>
+                <td>{zahl(plan.gesamt.qp)}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         {plan.proQuelle.some((q) => q.ueberLimit) && (
-          <div className="merker" style={{ marginTop: 14, marginBottom: 0 }}>
+          <div className="merker" style={{ margin: 'var(--s4) 0 0' }}>
             <span aria-hidden="true">✂️</span>
             <div>
               <b>Jahreslimit erreicht</b>
@@ -295,21 +297,6 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
           </div>
         )}
       </section>
-
-      {rest.length > 0 && (
-        <p className="quellen">
-          Maximal aus Boden-Quellen noch möglich:{' '}
-          {zahl(bodenMoeglich.points)} Points, davon {zahl(bodenMoeglich.qp)} Qualifying
-          Points — Details unter „Boden“. Punkte pro Einheit:{' '}
-          {rest
-            .map(
-              (r) =>
-                `${r.quelle.name} ${zahl(punkteFuerEinheiten(r.quelle, 1).points)}`,
-            )
-            .join(', ')}
-          .
-        </p>
-      )}
     </>
   )
 }

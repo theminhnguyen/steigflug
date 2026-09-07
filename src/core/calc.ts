@@ -151,6 +151,8 @@ export interface VerlaufPunkt {
   erreicht: boolean
   /** Beschriftung des Eintrags, der zu diesem Schritt geführt hat */
   label: string
+  /** Stammt der Schritt aus einem nur geplanten Eintrag? */
+  geplant: boolean
 }
 
 /**
@@ -166,7 +168,7 @@ export function berechneVerlauf(
 ): VerlaufPunkt[] {
   const jahr = daten.zieljahr
 
-  type Schritt = { datum: string; label: string; punkte: () => Punkte }
+  type Schritt = { datum: string; label: string; geplant: boolean; punkte: () => Punkte }
   const schritte: Schritt[] = []
 
   for (const f of daten.fluege) {
@@ -174,6 +176,7 @@ export function berechneVerlauf(
     schritte.push({
       datum: f.datum,
       label: `${f.von.toUpperCase()} → ${f.nach.toUpperCase()}`,
+      geplant: f.geplant,
       punkte: () => punkteFuerFlug(r, f),
     })
   }
@@ -186,6 +189,7 @@ export function berechneVerlauf(
     schritte.push({
       datum: b.datum,
       label: q.name,
+      geplant: b.geplant,
       punkte: () => {
         const grenze = maxEinheiten(q)
         const bisher = verbraucht.get(q.id) ?? 0
@@ -212,6 +216,7 @@ export function berechneVerlauf(
       qp,
       erreicht: points >= ziel.points && qp >= ziel.qualifyingPoints,
       label: s.label,
+      geplant: s.geplant,
     })
   }
   return verlauf

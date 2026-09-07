@@ -493,3 +493,14 @@ describe('Unbrauchbare Werte', () => {
     expect(berechneBilanz(R, d, 'plan').gesamt.points).toBe(40)
   })
 })
+
+describe('Verlauf kennzeichnet geplante Schritte', () => {
+  it('markiert jeden Schritt danach, ob sein Eintrag geplant war', () => {
+    const d = daten({
+      fluege: [flug({ datum: '2027-02-01' }), flug({ datum: '2027-06-01', geplant: true })],
+      boden: [boden({ datum: '2027-04-01', geplant: true })],
+    })
+    const v = berechneVerlauf(R, d, FTL, 'plan')
+    expect(v.map((x) => x.geplant)).toEqual([false, true, true])
+  })
+})

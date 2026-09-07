@@ -36,6 +36,15 @@ function leererFlug(jahr: number): Flug {
   }
 }
 
+/** Kleines Flugzeug für die Strecke zwischen den Flughäfen. */
+function FlugZeichen() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M15 8c0 .5-.5.8-1 .8l-4 .2-2.4 4.4c-.1.3-.4.4-.7.4h-.8c-.3 0-.5-.3-.4-.6L7.3 9 4 9.1l-1 1.4c-.1.2-.3.3-.5.3h-.6c-.3 0-.5-.3-.4-.6L2.4 8l-.9-2.2c-.1-.3.1-.6.4-.6h.6c.2 0 .4.1.5.3l1 1.4L7.3 7 5.7 2.8c-.1-.3.1-.6.4-.6h.8c.3 0 .6.1.7.4L10 7l4 .2c.5 0 1 .3 1 .8Z" />
+    </svg>
+  )
+}
+
 export default function Fluege({ regelwerk, daten, setDaten }: Props) {
   const [entwurf, setEntwurf] = useState<Flug>(() => leererFlug(daten.zieljahr))
   const [bearbeitet, setBearbeitet] = useState<string | null>(null)
@@ -421,42 +430,53 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
                   (a) => a.code === f.airline,
                 )?.name ?? f.airline
               return (
-                <div className={`zeile ${f.geplant ? 'ist-geplant' : ''}`} key={f.id}>
-                  <div className="zeile-haupt">
-                    <div className="zeile-titel">
-                      {f.von} → {f.nach}
-                      {f.geplant && <span className="marke-geplant">geplant</span>}
-                    </div>
-                    <div className="zeile-neben">
-                      {datumKurz(f.datum)} · {airline} · {klasse} ·{' '}
-                      {f.strecke === 'kontinental' ? 'Kurzstrecke' : 'Langstrecke'}
-                      {f.notiz ? ` · ${f.notiz}` : ''}
-                    </div>
-                  </div>
-                  <div className="punkte-block">
-                    <b>{zahl(p.points)}</b>
-                    <span className={p.qp === 0 ? 'keine-qp' : ''}>
-                      {p.qp === 0 ? 'keine QP' : `${zahl(p.qp)} QP`}
+                <article className={`flugkarte ${f.geplant ? 'geplant' : ''}`} key={f.id}>
+                  <div className="flugkarte-kopf">
+                    <span className="flugkarte-datum">{datumKurz(f.datum)}</span>
+                    {f.geplant && <span className="marke-geplant">geplant</span>}
+                    <span className="flugkarte-punkte">
+                      {zahl(p.points)}
+                      <em className={p.qp === 0 ? 'keine-qp' : ''}>
+                        {p.qp === 0 ? 'keine QP' : `${zahl(p.qp)} QP`}
+                      </em>
                     </span>
                   </div>
-                  <div className="knopf-reihe">
-                    <button
-                      type="button"
-                      className="knopf klein"
-                      onClick={() => bearbeiten(f)}
-                    >
-                      Ändern
-                    </button>
-                    <button
-                      type="button"
-                      className="knopf leise klein"
-                      onClick={() => loeschen(f.id)}
-                      aria-label={`Flug ${f.von} nach ${f.nach} löschen`}
-                    >
-                      Löschen
-                    </button>
+
+                  <div className="strecke">
+                    <span className="hafen">
+                      <span className="hafen-code">{f.von}</span>
+                      <span className="hafen-name">{AIRPORTS[f.von]?.name ?? ''}</span>
+                    </span>
+                    <span className="bahn" aria-hidden="true">
+                      <FlugZeichen />
+                    </span>
+                    <span className="hafen rechts">
+                      <span className="hafen-code">{f.nach}</span>
+                      <span className="hafen-name">{AIRPORTS[f.nach]?.name ?? ''}</span>
+                    </span>
                   </div>
-                </div>
+
+                  <div className="flugkarte-fuss">
+                    <span>
+                      {airline} · {klasse} ·{' '}
+                      {f.strecke === 'kontinental' ? 'Kurzstrecke' : 'Langstrecke'}
+                      {f.notiz && <span className="flugkarte-notiz">{f.notiz}</span>}
+                    </span>
+                    <div className="knopf-reihe">
+                      <button type="button" className="knopf klein" onClick={() => bearbeiten(f)}>
+                        Ändern
+                      </button>
+                      <button
+                        type="button"
+                        className="knopf leise klein"
+                        onClick={() => loeschen(f.id)}
+                        aria-label={`Flug ${f.von} nach ${f.nach} löschen`}
+                      >
+                        Löschen
+                      </button>
+                    </div>
+                  </div>
+                </article>
               )
             })}
           </div>

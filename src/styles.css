@@ -1,56 +1,112 @@
+/* ============================================================
+   Steigflug — Gestaltungssystem
+   Bild: Höhenmesser. Ruhige Flächen, präzise Zahlen, die Daten
+   sind das Einzige, was laut sein darf.
+   ============================================================ */
+
 :root {
   color-scheme: light dark;
 
-  --bg: #f4f6f9;
+  /* ---- Flächen & Text ---- */
+  --grund: #f2f5f9;
   --flaeche: #ffffff;
-  --flaeche-2: #eef1f6;
-  --rand: #d8dee8;
-  --text: #16202e;
-  --text-leise: #5c6b7f;
+  --flaeche-2: #eef2f7;
+  --flaeche-3: #e4eaf2;
+  --rand: #dde4ee;
+  --rand-stark: #c6d2e2;
+  --text: #101a27;
+  --text-2: #465a72;
+  --text-3: #71839b;
+
+  /* ---- Akzente (Oberfläche) ---- */
   --akzent: #0b5cab;
-  --akzent-weich: #e3edf9;
+  --akzent-hell: #d9e7f7;
+  --akzent-text: #094a8a;
   --qp: #b06f00;
-  --qp-weich: #fbf0dc;
-  --gut: #1c7a4a;
-  --warn: #a8410f;
-  --plan: #93a3b8;
-  --radius: 14px;
-  --schatten: 0 1px 2px rgb(16 32 46 / 8%), 0 6px 20px rgb(16 32 46 / 6%);
+  --qp-hell: #f7ecd7;
+  --gut: #16704a;
+  --gut-hell: #dcefe5;
+  --warn: #9c3d0d;
+  --warn-hell: #fbe6da;
+  --plan: #8698ae;
+
+  /* ---- Diagrammfarben (eigene Schritte, geprüft) ---- */
+  --serie-points: #0b5cab;
+  --serie-qp: #b06f00;
+  --gitter: #e4eaf2;
+
+  /* ---- Abstände ---- */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 24px; --s7: 32px; --s8: 44px;
+
+  /* ---- Radien & Tiefe ---- */
+  --r1: 8px; --r2: 12px; --r3: 16px; --r4: 22px;
+  --tiefe-1: 0 1px 2px rgb(16 26 39 / 6%);
+  --tiefe-2: 0 1px 2px rgb(16 26 39 / 6%), 0 4px 12px rgb(16 26 39 / 6%);
+  --tiefe-3: 0 2px 4px rgb(16 26 39 / 8%), 0 12px 32px rgb(16 26 39 / 10%);
+
+  /* ---- Schrift ---- */
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --zeit: 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b1b2b;
+    --grund: #070f18;
     --flaeche: #12263a;
     --flaeche-2: #17304a;
-    --rand: #244463;
-    --text: #e8eff7;
-    --text-leise: #9db1c8;
+    --flaeche-3: #1d3a58;
+    --rand: #24405f;
+    --rand-stark: #33587c;
+    --text: #eaf1f8;
+    --text-2: #a7bdd4;
+    --text-3: #7d94ad;
+
     --akzent: #5aa9f5;
-    --akzent-weich: #123553;
+    --akzent-hell: #143755;
+    --akzent-text: #8cc4fa;
     --qp: #f0b656;
-    --qp-weich: #3b2c12;
-    --gut: #57cf95;
-    --warn: #ff9a6b;
-    --plan: #5d7590;
-    --schatten: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
+    --qp-hell: #3a2c14;
+    --gut: #52cf94;
+    --gut-hell: #10352a;
+    --warn: #ff9c6e;
+    --warn-hell: #3b2117;
+    --plan: #5b7592;
+
+    --serie-points: #4a92dd;
+    --serie-qp: #bd872c;
+    --gitter: #21395420;
+
+    --tiefe-1: 0 1px 2px rgb(0 0 0 / 40%);
+    --tiefe-2: 0 1px 2px rgb(0 0 0 / 40%), 0 6px 18px rgb(0 0 0 / 30%);
+    --tiefe-3: 0 2px 6px rgb(0 0 0 / 45%), 0 16px 40px rgb(0 0 0 / 40%);
   }
 }
 
 * { box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--grund);
   color: var(--text);
-  font: 15px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  -webkit-text-size-adjust: 100%;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ---------- Gerüst ---------- */
+
 .huelle {
-  max-width: 760px;
+  max-width: 780px;
   margin: 0 auto;
-  padding: 0 16px calc(32px + env(safe-area-inset-bottom));
+  padding: 0 var(--s4) calc(var(--s8) + env(safe-area-inset-bottom));
 }
 
 /* ---------- Kopf ---------- */
@@ -58,42 +114,44 @@ body {
 .kopf {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: calc(16px + env(safe-area-inset-top)) 0 12px;
+  gap: var(--s2);
+  padding: calc(var(--s5) + env(safe-area-inset-top)) 0 var(--s3);
   flex-wrap: wrap;
 }
 
 .marke {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-weight: 650;
-  font-size: 18px;
-  letter-spacing: -0.01em;
+  gap: var(--s2);
+  font-weight: 620;
+  font-size: 19px;
+  letter-spacing: -0.02em;
   margin-right: auto;
 }
 
-.marke svg { display: block; }
-
 .kopf select {
   font: inherit;
-  font-size: 14px;
-  padding: 6px 10px;
-  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 7px 9px;
+  border-radius: var(--r1);
   border: 1px solid var(--rand);
   background: var(--flaeche);
   color: var(--text);
+  cursor: pointer;
+  transition: border-color var(--zeit);
 }
+.kopf select:hover { border-color: var(--rand-stark); }
 
 /* ---------- Reiter ---------- */
 
 .reiter {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   background: var(--flaeche-2);
-  border-radius: 12px;
-  padding: 4px;
-  margin-bottom: 18px;
+  border-radius: var(--r2);
+  padding: 3px;
+  margin-bottom: var(--s5);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -103,26 +161,26 @@ body {
   flex: 1 0 auto;
   font: inherit;
   font-size: 14px;
-  font-weight: 550;
-  padding: 8px 12px;
+  font-weight: 540;
+  padding: 8px 14px;
   border: 0;
-  border-radius: 9px;
+  border-radius: var(--r1);
   background: transparent;
-  color: var(--text-leise);
+  color: var(--text-2);
   cursor: pointer;
   white-space: nowrap;
+  transition: background var(--zeit), color var(--zeit);
 }
-
+.reiter button:hover { color: var(--text); }
 .reiter button[aria-current='true'] {
   background: var(--flaeche);
   color: var(--text);
-  box-shadow: var(--schatten);
+  box-shadow: var(--tiefe-1);
 }
 
-/* Auf schmalen Displays müssen alle fünf Reiter nebeneinander passen. */
 @media (max-width: 430px) {
   .reiter button { font-size: 13px; padding: 8px 7px; }
-  .huelle { padding-left: 12px; padding-right: 12px; }
+  .huelle { padding-left: var(--s3); padding-right: var(--s3); }
 }
 
 /* ---------- Karten ---------- */
@@ -130,165 +188,292 @@ body {
 .karte {
   background: var(--flaeche);
   border: 1px solid var(--rand);
-  border-radius: var(--radius);
-  padding: 18px;
-  margin-bottom: 14px;
+  border-radius: var(--r3);
+  padding: var(--s5);
+  margin-bottom: var(--s3);
+  box-shadow: var(--tiefe-1);
 }
 
 .karte > h2 {
-  margin: 0 0 4px;
-  font-size: 16px;
-  font-weight: 650;
+  margin: 0 0 var(--s1);
+  font-size: 15.5px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
 }
-
-.karte > h2 + .unter { margin: 0 0 16px; }
 
 .unter {
-  margin: 0 0 14px;
-  color: var(--text-leise);
+  margin: 0 0 var(--s4);
+  color: var(--text-2);
   font-size: 13.5px;
 }
+.karte > h2 + .unter { margin-top: 0; }
 
-/* ---------- Fortschritt ---------- */
+.abschnitt-titel {
+  margin: 0 0 var(--s2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.01em;
+}
 
-.ziel + .ziel { margin-top: 20px; }
+/* ---------- Kernaussage mit Leitzahl ---------- */
+
+.aussage {
+  border-radius: var(--r3);
+  padding: var(--s5);
+  margin-bottom: var(--s3);
+  border: 1px solid var(--rand);
+  background:
+    radial-gradient(120% 140% at 88% 0%, var(--akzent-hell) 0%, transparent 62%),
+    var(--flaeche);
+  box-shadow: var(--tiefe-1);
+}
+.aussage.erreicht {
+  background:
+    radial-gradient(120% 140% at 88% 0%, var(--gut-hell) 0%, transparent 62%),
+    var(--flaeche);
+}
+
+/* Genau eine Leitzahl je Ansicht, >= 48px, gleiche Schrift wie alles andere.
+   Große Zahlen mit proportionalen Ziffern — tabellarische wirken hier locker. */
+.leitzahl {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  margin: 0 0 var(--s2);
+}
+.leitzahl b {
+  font-size: 52px;
+  font-weight: 660;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: proportional-nums;
+}
+.leitzahl .einheit { font-size: 17px; font-weight: 560; color: var(--text-2); }
+.aussage p { margin: 0; color: var(--text-2); font-size: 13.5px; max-width: 56ch; }
+.aussage .zusatz {
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--rand);
+  font-size: 13px;
+}
+
+/* ---------- Fortschritt als Messuhr ---------- */
+
+.ziel + .ziel { margin-top: var(--s5); }
 
 .ziel-kopf {
   display: flex;
   align-items: baseline;
-  gap: 8px;
-  margin-bottom: 7px;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
 }
+.ziel-name { font-weight: 560; font-size: 13.5px; color: var(--text-2); }
+.ziel-zahl {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.ziel-zahl b {
+  font-size: 19px;
+  font-weight: 620;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.ziel-zahl .geplant-zusatz { color: var(--text-2); }
 
-.ziel-name { font-weight: 600; font-size: 14px; }
-.ziel-zahl { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 14px; }
-.ziel-zahl b { font-size: 17px; }
-.ziel-zahl span { color: var(--text-leise); }
-
+/* Die ungefüllte Bahn ist ein hellerer Schritt derselben Farbe,
+   damit der Zustand über den ganzen Balken lesbar bleibt. */
 .balken {
   position: relative;
-  height: 14px;
-  border-radius: 7px;
-  background: var(--flaeche-2);
+  height: 10px;
+  border-radius: 999px;
+  background: var(--akzent-hell);
   overflow: hidden;
 }
+.balken.qp { background: var(--qp-hell); }
 
 .balken i {
   position: absolute;
   inset: 0 auto 0 0;
   display: block;
-  border-radius: 7px;
-  transition: width 0.35s ease;
+  border-radius: 999px;
+  transition: width 600ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
-
 .balken .ist { background: var(--akzent); z-index: 2; }
 .balken.qp .ist { background: var(--qp); }
-
 .balken .plan {
   z-index: 1;
   background-image: repeating-linear-gradient(
-    135deg, var(--plan) 0 5px, transparent 5px 10px
+    135deg, var(--plan) 0 4px, transparent 4px 9px
   );
-  background-color: color-mix(in srgb, var(--plan) 22%, transparent);
 }
 
 .legende {
   display: flex;
-  gap: 14px;
+  gap: var(--s4);
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: var(--s3);
   font-size: 12.5px;
-  color: var(--text-leise);
+  color: var(--text-2);
 }
 .legende span { display: inline-flex; align-items: center; gap: 6px; }
-.legende i { width: 11px; height: 11px; border-radius: 3px; display: block; }
+.legende i { width: 10px; height: 10px; border-radius: 3px; display: block; flex: none; }
 .legende .l-ist { background: var(--akzent); }
 .legende .l-qp { background: var(--qp); }
 .legende .l-plan {
-  background-image: repeating-linear-gradient(135deg, var(--plan) 0 4px, transparent 4px 8px);
-  background-color: color-mix(in srgb, var(--plan) 22%, transparent);
+  background-image: repeating-linear-gradient(135deg, var(--plan) 0 3px, transparent 3px 7px);
+  background-color: color-mix(in srgb, var(--plan) 20%, transparent);
 }
 
-/* ---------- Kernaussage ---------- */
+/* ---------- Diagramm ---------- */
 
-.aussage {
-  border-radius: var(--radius);
-  padding: 16px 18px;
-  margin-bottom: 14px;
-  border: 1px solid var(--rand);
-  background: var(--akzent-weich);
+.diagramm { position: relative; margin: 0 -4px; }
+.diagramm svg { display: block; width: 100%; height: auto; overflow: visible; }
+.diagramm-achse { fill: var(--text-3); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.diagramm-marke { fill: var(--text-2); font-size: 11px; font-weight: 560; }
+
+.marker {
+  position: absolute;
+  pointer-events: none;
+  background: var(--flaeche);
+  border: 1px solid var(--rand-stark);
+  border-radius: var(--r1);
+  box-shadow: var(--tiefe-2);
+  padding: 8px 10px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  z-index: 5;
+  transform: translate(-50%, -100%);
 }
-.aussage.erreicht { background: color-mix(in srgb, var(--gut) 14%, transparent); }
-.aussage strong { font-size: 17px; display: block; margin-bottom: 3px; }
-.aussage p { margin: 0; color: var(--text-leise); font-size: 13.5px; }
+.marker-datum { font-weight: 600; margin-bottom: 3px; }
+.marker-zeile { display: flex; align-items: center; gap: 6px; color: var(--text-2); }
+.marker-zeile i { width: 8px; height: 8px; border-radius: 2px; display: block; }
+.marker-zeile b { color: var(--text); font-variant-numeric: tabular-nums; margin-left: auto; }
+
+.werte-klappe { margin-top: var(--s3); font-size: 13px; }
+.werte-klappe summary {
+  cursor: pointer;
+  color: var(--text-2);
+  font-size: 12.5px;
+  padding: 4px 0;
+}
+.werte-klappe summary:hover { color: var(--text); }
 
 /* ---------- Listen ---------- */
 
-.liste { display: flex; flex-direction: column; gap: 8px; }
+.liste { display: flex; flex-direction: column; gap: var(--s2); }
 
 .zeile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 13px;
+  gap: var(--s3);
+  padding: var(--s3);
   border: 1px solid var(--rand);
-  border-radius: 11px;
+  border-radius: var(--r2);
   background: var(--flaeche);
+  transition: border-color var(--zeit), box-shadow var(--zeit);
 }
+.zeile:hover { border-color: var(--rand-stark); box-shadow: var(--tiefe-1); }
 .zeile.ist-geplant { border-style: dashed; background: transparent; }
 
 .zeile-haupt { min-width: 0; flex: 1; }
 .zeile-titel {
-  font-weight: 550;
+  font-weight: 560;
   font-size: 14.5px;
   display: flex;
   align-items: center;
   gap: 7px;
   flex-wrap: wrap;
 }
-.zeile-neben { font-size: 12.5px; color: var(--text-leise); margin-top: 2px; }
+.zeile-neben { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+
+/* Streckenzeile im Bordkarten-Stil */
+.strecke {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-width: 0;
+  flex: 1;
+}
+.hafen { display: flex; flex-direction: column; min-width: 0; }
+.hafen-code {
+  font-size: 21px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.hafen-name {
+  font-size: 11.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 11ch;
+}
+.hafen.rechts { align-items: flex-end; text-align: right; }
+
+.bahn {
+  flex: 1;
+  min-width: 26px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-3);
+}
+.bahn::before, .bahn::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: repeating-linear-gradient(90deg, var(--rand-stark) 0 3px, transparent 3px 6px);
+}
+.bahn svg { display: block; flex: none; }
 
 .punkte-block { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.punkte-block b { font-size: 15px; }
-.punkte-block span { display: block; font-size: 12px; color: var(--qp); }
-.punkte-block span.keine-qp { color: var(--text-leise); }
+.punkte-block b { font-size: 16px; font-weight: 620; letter-spacing: -0.01em; }
+.punkte-block span { display: block; font-size: 11.5px; color: var(--qp); margin-top: 1px; }
+.punkte-block span.keine-qp { color: var(--text-3); }
 
 .marke-geplant {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 660;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: var(--plan);
   border: 1px solid var(--plan);
-  border-radius: 5px;
-  padding: 0 5px;
+  border-radius: 4px;
+  padding: 1px 5px;
+  line-height: 1.4;
 }
 
 .leer {
   text-align: center;
-  color: var(--text-leise);
+  color: var(--text-2);
   font-size: 13.5px;
-  padding: 26px 12px;
-  border: 1px dashed var(--rand);
-  border-radius: 11px;
+  padding: var(--s7) var(--s4);
+  border: 1px dashed var(--rand-stark);
+  border-radius: var(--r2);
+  background: var(--flaeche-2);
 }
 
 /* ---------- Formular ---------- */
 
-.formular { display: grid; gap: 12px; }
+.formular { display: grid; gap: var(--s3); }
 
 .feld-reihe {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
+  gap: var(--s3);
 }
 
 .feld { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 
 .feld label {
   font-size: 12.5px;
-  font-weight: 550;
-  color: var(--text-leise);
+  font-weight: 560;
+  color: var(--text-2);
 }
 
 .feld input,
@@ -296,140 +481,227 @@ body {
 .feld textarea {
   font: inherit;
   font-size: 15px;
-  padding: 9px 11px;
+  padding: 10px 12px;
   border: 1px solid var(--rand);
-  border-radius: 10px;
+  border-radius: var(--r1);
   background: var(--flaeche-2);
   color: var(--text);
   width: 100%;
   min-width: 0;
+  transition: border-color var(--zeit), background var(--zeit);
 }
+.feld input:hover, .feld select:hover { border-color: var(--rand-stark); }
+.feld input:focus, .feld select:focus { background: var(--flaeche); }
 
 .feld input:focus-visible,
 .feld select:focus-visible,
-button:focus-visible {
+button:focus-visible,
+summary:focus-visible {
   outline: 2px solid var(--akzent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-.feld .hinweis { font-size: 12px; color: var(--text-leise); }
+.feld .hinweis { font-size: 12px; color: var(--text-3); }
 .feld .hinweis.warn { color: var(--warn); }
+.hinweis { font-size: 12.5px; color: var(--text-3); }
 
 .schalter {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: var(--s2);
   font-size: 14px;
   cursor: pointer;
+  color: var(--text-2);
 }
-.schalter input { width: 18px; height: 18px; accent-color: var(--akzent); }
+.schalter input { width: 18px; height: 18px; accent-color: var(--akzent); flex: none; }
 
 /* ---------- Knöpfe ---------- */
 
 .knopf {
   font: inherit;
-  font-size: 14.5px;
-  font-weight: 550;
+  font-size: 14px;
+  font-weight: 560;
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: var(--r1);
   border: 1px solid var(--rand);
   background: var(--flaeche-2);
   color: var(--text);
   cursor: pointer;
+  transition: background var(--zeit), border-color var(--zeit), transform 120ms;
 }
-.knopf:hover { border-color: var(--akzent); }
-.knopf.haupt { background: var(--akzent); border-color: var(--akzent); color: #fff; }
-.knopf.haupt:hover { filter: brightness(1.08); }
-.knopf.klein { padding: 6px 11px; font-size: 13px; }
-.knopf.leise { background: transparent; border-color: transparent; color: var(--text-leise); }
-.knopf.leise:hover { color: var(--warn); border-color: var(--rand); }
+.knopf:hover { border-color: var(--rand-stark); background: var(--flaeche-3); }
+.knopf:active { transform: translateY(1px); }
+.knopf.haupt {
+  background: var(--akzent);
+  border-color: var(--akzent);
+  color: #fff;
+  box-shadow: var(--tiefe-1);
+}
+.knopf.haupt:hover { filter: brightness(1.08); border-color: var(--akzent); }
+.knopf.klein { padding: 7px 12px; font-size: 13px; }
+.knopf.leise { background: transparent; border-color: transparent; color: var(--text-3); }
+.knopf.leise:hover { color: var(--warn); background: var(--warn-hell); border-color: transparent; }
 .knopf:disabled { opacity: 0.45; cursor: not-allowed; }
+.knopf:disabled:hover { transform: none; background: var(--flaeche-2); border-color: var(--rand); }
 
-.knopf-reihe { display: flex; gap: 8px; flex-wrap: wrap; }
+.knopf-reihe { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+
+.knopf.google {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  background: #fff;
+  color: #1f1f1f;
+  border-color: #dadce0;
+  font-weight: 520;
+}
+.knopf.google:hover { background: #f6f7f8; border-color: #c9cdd2; }
 
 /* ---------- Tabellen ---------- */
 
 .tabelle-huelle { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
 
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
-th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--rand); }
-th:first-child, td:first-child { text-align: left; }
-thead th { font-size: 12.5px; color: var(--text-leise); font-weight: 600; }
+th, td {
+  text-align: right;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--rand);
+  font-variant-numeric: tabular-nums;
+}
+th:first-child, td:first-child { text-align: left; font-variant-numeric: normal; }
+thead th { font-size: 12px; color: var(--text-3); font-weight: 600; letter-spacing: 0.02em; }
 tbody tr:last-child td { border-bottom: 0; }
-td input { width: 74px; text-align: right; }
+tbody tr.summe td { font-weight: 640; border-top: 1px solid var(--rand-stark); }
+td input { width: 76px; text-align: right; }
 
-/* ---------- Kleinkram ---------- */
+/* ---------- Merker & Chips ---------- */
 
 .merker {
   display: flex;
-  gap: 10px;
+  gap: var(--s3);
   align-items: flex-start;
-  padding: 12px 14px;
-  border-radius: 11px;
-  background: var(--qp-weich);
-  border: 1px solid color-mix(in srgb, var(--qp) 35%, transparent);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r2);
+  background: var(--qp-hell);
+  border: 1px solid color-mix(in srgb, var(--qp) 28%, transparent);
   font-size: 13.5px;
-  margin-bottom: 14px;
+  margin-bottom: var(--s3);
+  line-height: 1.45;
 }
 .merker b { display: block; margin-bottom: 2px; }
+.merker > span { flex: none; }
 
-.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   font-size: 12.5px;
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--flaeche-2);
   border: 1px solid var(--rand);
-  color: var(--text-leise);
+  color: var(--text-2);
 }
-.chip.gut { color: var(--gut); border-color: color-mix(in srgb, var(--gut) 45%, transparent); }
-.chip.voll { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+.chip.gut { color: var(--gut); background: var(--gut-hell); border-color: color-mix(in srgb, var(--gut) 30%, transparent); }
+.chip.voll { color: var(--warn); background: var(--warn-hell); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
 
-.quellen { font-size: 12.5px; color: var(--text-leise); }
-.quellen a { color: var(--akzent); }
+.quellen { font-size: 12.5px; color: var(--text-3); line-height: 1.55; }
+.quellen a { color: var(--akzent-text); }
 
-.fuss {
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-leise);
-  padding: 18px 0 0;
-}
+/* ---------- Konto ---------- */
 
-/* ---------- Konto & Abgleich ---------- */
-
-.knopf.google {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  background: #fff;
-  color: #1f1f1f;
-  border-color: #dadce0;
-  font-weight: 500;
-}
-.knopf.google:hover { background: #f7f8f8; border-color: #c9cdd2; }
-
-.ampel {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex: none;
-}
-.ampel.gruen { background: var(--gut); }
-.ampel.gelb { background: var(--qp); }
-.ampel.rot { background: var(--warn); }
+.ampel { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.ampel.gruen { background: var(--gut); box-shadow: 0 0 0 3px var(--gut-hell); }
+.ampel.gelb { background: var(--qp); box-shadow: 0 0 0 3px var(--qp-hell); }
+.ampel.rot { background: var(--warn); box-shadow: 0 0 0 3px var(--warn-hell); }
 .ampel.grau { background: var(--plan); }
 
 .kopf-ampel {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   font-size: 12.5px;
-  color: var(--text-leise);
-  padding: 6px 10px;
+  font-weight: 500;
+  color: var(--text-2);
+  padding: 7px 11px;
   border: 1px solid var(--rand);
-  border-radius: 9px;
+  border-radius: var(--r1);
   background: var(--flaeche);
   cursor: pointer;
   font-family: inherit;
+  transition: border-color var(--zeit);
 }
-.kopf-ampel:hover { border-color: var(--akzent); }
+.kopf-ampel:hover { border-color: var(--rand-stark); color: var(--text); }
+
+.fuss {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-3);
+  padding: var(--s5) 0 0;
+}
+
+/* ---------- Flugkarte ---------- */
+
+.flugkarte {
+  border: 1px solid var(--rand);
+  border-radius: var(--r2);
+  background: var(--flaeche);
+  padding: var(--s3) var(--s4);
+  transition: border-color var(--zeit), box-shadow var(--zeit);
+}
+.flugkarte:hover { border-color: var(--rand-stark); box-shadow: var(--tiefe-1); }
+.flugkarte.geplant {
+  border-style: dashed;
+  background: linear-gradient(var(--flaeche-2), var(--flaeche-2)) padding-box;
+}
+
+.flugkarte-kopf {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+.flugkarte-datum {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.flugkarte-punkte {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.flugkarte-punkte em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 560;
+  color: var(--qp);
+}
+.flugkarte-punkte em.keine-qp { color: var(--text-3); }
+
+.flugkarte-fuss {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  padding-top: var(--s2);
+  border-top: 1px solid var(--rand);
+  font-size: 12.5px;
+  color: var(--text-3);
+  flex-wrap: wrap;
+}
+.flugkarte-fuss .knopf-reihe { margin-left: auto; gap: var(--s1); }
+.flugkarte-fuss .knopf { padding: 5px 10px; font-size: 12.5px; }
+
+.flugkarte-notiz {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
