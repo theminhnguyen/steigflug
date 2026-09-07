@@ -13,6 +13,7 @@ import { menge, zahl } from '../core/format'
 import { ohneGeloeschte } from '../sync/merge'
 import type { Konto } from '../sync/useKonto'
 import KontoBereich from './Konto'
+import MmImport from './MmImport'
 
 interface Props {
   daten: AppDaten
@@ -81,6 +82,8 @@ export default function Daten({ daten, setDaten, konto }: Props) {
   return (
     <>
       <KontoBereich konto={konto} />
+
+      <MmImport daten={daten} setDaten={setDaten} />
 
       <section className="karte">
         <h2>Sicherung</h2>

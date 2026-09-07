@@ -156,6 +156,31 @@ einer Eingabe wäre schlimmer als ein Tag Rückstand.
 Der erste Besuch einer Seite wird von keinem Service Worker gesteuert. Ein
 Aktualisierungstest muss vorher zweimal laden, sonst prüft man einen Randfall.
 
+## Import aus Miles & More
+
+`src/import/milesandmore.ts` liest die eigene Flughistorie aus dem Konto:
+`api.travelid.lufthansa.com/flightstats/v3/me/segmentList`, im angemeldeten
+Browser aufgerufen und als Datei gesichert. **Nicht dokumentiert**, kann ohne
+Ankündigung verschwinden — deshalb liest der Parser durchgehend nachsichtig:
+fehlt ein Feld oder passt ein Wert nicht, wird die Zeile übersprungen statt den
+Import zu kippen. Textfelder kommen mit Leerzeichen aufgefüllt (`"LH   "`).
+
+`StatusPoints` sind die tatsächlich gutgeschriebenen Punkte und landen als
+`korrekturPoints` — echte Gutschrift schlägt jede Berechnung. **Was `GupPoints`
+genau bedeutet, ist nicht belegt** (das Projekt, aus dem das Schema stammt, weiß
+es auch nicht). Vermutlich Qualifying Points; deshalb zeigt die Vorschau alle
+belegten Punktefelder an und lässt die Deutung umschalten, statt sie zu
+unterstellen. Nicht stillschweigend als sicher behandeln.
+
+**Zweimal einlesen darf nichts verdoppeln.** Die Datei vergibt bei jedem Abruf
+neue Kennungen, deshalb identifiziert `kennzeichen()` ein Segment über Datum,
+Strecke und Airline. Der Abgleich ersetzt nie einen vorhandenen Eintrag — er
+ergänzt nur leere Korrekturwerte und macht aus einem geplanten einen geflogenen
+Flug. Von Hand Eingetragenes bleibt unangetastet.
+
+Der Endpunkt liefert **geflogene** Segmente. Gebuchte Reisen in der Zukunft
+stehen dort nicht; die bleiben Handarbeit.
+
 ## Sprache
 
 Bezeichner, Kommentare und Oberfläche auf Deutsch. Fachbegriffe des Programms

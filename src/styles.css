@@ -729,3 +729,27 @@ td input { width: 76px; text-align: right; }
 .hinweisleiste b { display: block; }
 .hinweisleiste span { color: var(--text-2); }
 .hinweisleiste .knopf-reihe { margin-left: auto; }
+
+/* ---------- Anleitung & Import-Vorschau ---------- */
+
+.anleitung {
+  margin: 0 0 var(--s4);
+  padding-left: 1.3em;
+  font-size: 13.5px;
+  color: var(--text-2);
+  display: grid;
+  gap: var(--s1);
+}
+.anleitung a { color: var(--akzent-text); }
+.anleitung code {
+  font-size: 12px;
+  background: var(--flaeche-2);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+
+.vorschau {
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--rand);
+}
