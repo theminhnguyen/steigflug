@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AIRPORTS, airportLabel, schaetzeStrecke } from './airports'
+import { AIRPORTS, airportLabel, schaetzeStrecke, streckenHinweis } from './airports'
 
 describe('Flughafenliste', () => {
   it('liest jeden Eintrag vollständig ein', () => {
@@ -89,5 +89,36 @@ describe('airportLabel', () => {
 
   it('fällt bei Unbekanntem auf den Code zurück', () => {
     expect(airportLabel('xyz')).toBe('XYZ')
+  })
+})
+
+describe('streckenHinweis', () => {
+  it('meldet bei leerem Formular nichts Beunruhigendes', () => {
+    expect(streckenHinweis('', '', false)).toBe('nochUnvollstaendig')
+  })
+
+  it('wartet ab, solange nur ein Flughafen dasteht', () => {
+    expect(streckenHinweis('FRA', '', false)).toBe('nochUnvollstaendig')
+    expect(streckenHinweis('', 'MUC', false)).toBe('nochUnvollstaendig')
+    expect(streckenHinweis('FR', 'MU', false)).toBe('nochUnvollstaendig')
+  })
+
+  it('meldet Erkennung bei zwei bekannten Flughäfen', () => {
+    expect(streckenHinweis('FRA', 'MUC', false)).toBe('erkannt')
+    expect(streckenHinweis('FRA', 'JFK', false)).toBe('erkannt')
+  })
+
+  it('meldet den Grenzfall rund ums Mittelmeer', () => {
+    expect(streckenHinweis('FRA', 'IST', false)).toBe('grenzfall')
+  })
+
+  it('warnt erst, wenn wirklich ein unbekannter Code dasteht', () => {
+    expect(streckenHinweis('FRA', 'ZZZ', false)).toBe('unbekannt')
+    expect(streckenHinweis('ZZZ', 'YYY', false)).toBe('unbekannt')
+  })
+
+  it('schweigt, sobald die Strecke selbst gesetzt wurde', () => {
+    expect(streckenHinweis('FRA', 'ZZZ', true)).toBe('selbstGesetzt')
+    expect(streckenHinweis('', '', true)).toBe('selbstGesetzt')
   })
 })

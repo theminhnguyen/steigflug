@@ -127,3 +127,30 @@ export function airportLabel(iata: string): string {
   const f = AIRPORTS[iata.toUpperCase()]
   return f ? `${f.iata} · ${f.name}` : iata.toUpperCase()
 }
+
+export type StreckenHinweis =
+  | 'selbstGesetzt'
+  | 'nochUnvollstaendig'
+  | 'erkannt'
+  | 'grenzfall'
+  | 'unbekannt'
+
+/**
+ * Welcher Hinweis unter dem Streckenfeld stehen soll.
+ *
+ * Als Bedingungskette im JSX stand hier ein Fehler: Bei leerem Formular gilt
+ * eine Strecke als „nicht sicher“, und die App warnte deshalb schon beim
+ * Öffnen, der Flughafen sei unbekannt. Nichts eingetragen ist aber nicht
+ * dasselbe wie nicht erkannt.
+ */
+export function streckenHinweis(
+  von: string,
+  nach: string,
+  streckeManuell: boolean,
+): StreckenHinweis {
+  if (streckeManuell) return 'selbstGesetzt'
+  if (von.length !== 3 || nach.length !== 3) return 'nochUnvollstaendig'
+  const vorschlag = schaetzeStrecke(von, nach)
+  if (vorschlag.grenzfall) return 'grenzfall'
+  return vorschlag.sicher ? 'erkannt' : 'unbekannt'
+}

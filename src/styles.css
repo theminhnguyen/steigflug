@@ -774,3 +774,19 @@ kbd {
   color: var(--text);
   white-space: nowrap;
 }
+
+/* iOS Safari gibt Datumsfeldern eine eigene Mindestbreite, die sich weder mit
+   width noch mit min-width unterbieten lässt — ohne das Zurücksetzen des
+   Erscheinungsbilds sprengt das Feld seine Spalte. */
+.feld input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  text-align: left;
+}
+
+/* Spalten dürfen unter ihren Inhalt schrumpfen, sonst schiebt ein breites
+   Feld die Nachbarn aus der Karte heraus. */
+.feld-reihe {
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+}

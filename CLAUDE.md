@@ -227,9 +227,26 @@ damit `Array.from({length: Infinity})`, also ein `RangeError` und eine weiße
 Seite. Jetzt in `src/core/kurveskala.ts` mit Tests, inklusive Deckelung der
 Gitterlinien.
 
+Dasselbe gilt für **Entscheidungen über Hinweistexte**. Als Bedingungskette im
+JSX stand dort ein Fehler: Eine leere Strecke gilt als „nicht sicher“, und die
+App warnte deshalb schon beim Öffnen, der Flughafen sei unbekannt. Nichts
+eingetragen ist aber nicht dasselbe wie nicht erkannt. Jetzt entscheidet
+`streckenHinweis()` mit Tests für alle fünf Zustände.
+
 **Regel daraus:** Sobald in einer Komponente gerechnet wird — geteilt, skaliert,
 gerundet —, gehört das in `src/core/` und braucht einen Test. Division durch eine
 Nutzereingabe immer absichern; das Regelwerk lässt Nullen zu.
+
+## iOS-Eigenheiten im Layout
+
+Datumsfelder bringen auf iOS Safari eine eigene Mindestbreite mit, die sich
+weder mit `width` noch mit `min-width` unterbieten lässt. In einer Rasterspalte
+neben anderen Feldern sprengte das die Karte. Gegenmittel: `appearance: none`
+auf `input[type=date]`, Spalten als `minmax(min(140px, 100%), 1fr)`, und das
+Datum steht in einer eigenen Zeile statt neben den Flughäfen.
+
+Das fällt in der Browservorschau nicht auf — dort wird Chrome nachgebildet,
+nicht Safari. Layoutfehler dieser Art zeigen sich erst am Gerät.
 
 ## Sprache
 

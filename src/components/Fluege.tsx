@@ -3,7 +3,7 @@ import type { AppDaten, Flug, KlassenId, SetDaten, Strecke } from '../core/types
 import type { Regelwerk } from '../rules'
 import { alleAirlines, istQualifyingAirline } from '../rules'
 import { jahrVon, punkteFuerFlug } from '../core/calc'
-import { AIRPORTS, airportLabel, schaetzeStrecke } from '../data/airports'
+import { AIRPORTS, airportLabel, schaetzeStrecke, streckenHinweis } from '../data/airports'
 import { datumKurz, heuteIso, menge, zahl, zahlAusFeld } from '../core/format'
 import { neueId } from '../store/store'
 import { alsGeloescht, ohneGeloeschte } from '../sync/merge'
@@ -78,7 +78,7 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
     return { imJahr: sortiereSegmente(jahr), andereJahre: sichtbar.length - jahr.length }
   }, [daten.fluege, daten.zieljahr])
 
-  const vorschlag = schaetzeStrecke(entwurf.von, entwurf.nach)
+  const hinweis = streckenHinweis(entwurf.von, entwurf.nach, entwurf.streckeManuell)
   const vorschau = punkteFuerFlug(regelwerk, entwurf)
   const vollstaendig = Boolean(entwurf.datum && entwurf.von && entwurf.nach)
 
@@ -153,22 +153,25 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
         </p>
 
         <div className="formular">
-          <div className="feld-reihe">
-            <div className="feld">
-              <label htmlFor="f-datum">Datum</label>
-              <input
-                id="f-datum"
-                type="date"
-                value={entwurf.datum}
-                onChange={(e) => aendere({ datum: e.target.value })}
-              />
-              {entwurf.datum && jahrVon(entwurf.datum) !== daten.zieljahr && (
-                <span className="hinweis warn">
-                  Liegt nicht im Zieljahr {daten.zieljahr} — zählt dort nicht mit.
-                </span>
-              )}
-            </div>
+          {/* Das Datumsfeld steht allein: Auf dem iPhone bringt es eine eigene,
+              nicht schrumpfbare Mindestbreite mit und drängte die Flughäfen
+              sonst über den Rand. Von und Nach gehören ohnehin zusammen. */}
+          <div className="feld">
+            <label htmlFor="f-datum">Datum</label>
+            <input
+              id="f-datum"
+              type="date"
+              value={entwurf.datum}
+              onChange={(e) => aendere({ datum: e.target.value })}
+            />
+            {entwurf.datum && jahrVon(entwurf.datum) !== daten.zieljahr && (
+              <span className="hinweis warn">
+                Liegt nicht im Zieljahr {daten.zieljahr} — zählt dort nicht mit.
+              </span>
+            )}
+          </div>
 
+          <div className="feld-reihe">
             <div className="feld">
               <label htmlFor="f-von">Von</label>
               <input
@@ -272,7 +275,7 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
                 <option value="kontinental">Kurzstrecke (kontinental)</option>
                 <option value="interkontinental">Langstrecke (interkontinental)</option>
               </select>
-              {entwurf.streckeManuell ? (
+              {hinweis === 'selbstGesetzt' ? (
                 <span className="hinweis">
                   Selbst gesetzt.{' '}
                   <button
@@ -291,15 +294,19 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
                     Automatik zurück
                   </button>
                 </span>
-              ) : vorschlag.grenzfall ? (
+              ) : hinweis === 'grenzfall' ? (
                 <span className="hinweis warn">
                   Grenzfall rund ums Mittelmeer — bitte gegenprüfen.
                 </span>
-              ) : vorschlag.sicher ? (
+              ) : hinweis === 'erkannt' ? (
                 <span className="hinweis">Automatisch aus den Flughäfen erkannt.</span>
-              ) : (
+              ) : hinweis === 'unbekannt' ? (
                 <span className="hinweis warn">
                   Flughafen unbekannt — bitte selbst wählen.
+                </span>
+              ) : (
+                <span className="hinweis">
+                  Wird aus den Flughäfen erkannt, sobald beide eingetragen sind.
                 </span>
               )}
             </div>
