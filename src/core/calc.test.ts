@@ -9,6 +9,7 @@ import {
   bodenRestKapazitaet,
   erreichtAm,
   flugVorschlaege,
+  unverzichtbareQuellen,
   maxEinheiten,
   punkteFuerFlug,
 } from './calc'
@@ -537,5 +538,47 @@ describe('bodenOhneLimit', () => {
   it('nennt keine begrenzte Quelle', () => {
     const ohne = bodenOhneLimit(berechneBilanz(R, daten(), 'plan'))
     expect(ohne.map((o) => o.quelle.id)).not.toContain('marriott')
+  })
+})
+
+describe('unverzichtbareQuellen', () => {
+  const q = (id: string, points: number) =>
+    ({
+      quelle: { id, name: id, einheit: 'x', einheitPlural: 'x', maxPointsProJahr: points, hinweis: '' },
+      einheitenFrei: 1,
+      punkte: { points, qp: 0 },
+    }) as never
+
+  it('nennt die Quelle, ohne die es nicht aufgeht', () => {
+    // 120+40+100+100 = 360 bei einer Lücke von 250: ohne Marriott bleiben 240.
+    const rest = [q('marriott', 120), q('kk', 40), q('tausch', 100), q('uptrip', 100)]
+    const noetig = unverzichtbareQuellen(rest, { points: 250, qp: 0, erreicht: false })
+    expect(noetig.map((r) => r.quelle.id)).toEqual(['marriott'])
+  })
+
+  it('nennt mehrere, wenn es ganz knapp ist', () => {
+    const rest = [q('a', 100), q('b', 100)]
+    const noetig = unverzichtbareQuellen(rest, { points: 150, qp: 0, erreicht: false })
+    expect(noetig.map((r) => r.quelle.id)).toEqual(['a', 'b'])
+  })
+
+  it('schweigt, wenn reichlich Luft ist', () => {
+    const rest = [q('a', 100), q('b', 100), q('c', 100)]
+    expect(unverzichtbareQuellen(rest, { points: 50, qp: 0, erreicht: false })).toHaveLength(0)
+  })
+
+  it('schweigt, wenn es ohnehin nicht reicht — dann ist keine allein schuld', () => {
+    const rest = [q('a', 50), q('b', 50)]
+    expect(unverzichtbareQuellen(rest, { points: 400, qp: 0, erreicht: false })).toHaveLength(0)
+  })
+
+  it('schweigt bei erreichtem Ziel', () => {
+    const rest = [q('a', 100)]
+    expect(unverzichtbareQuellen(rest, { points: 0, qp: 0, erreicht: true })).toHaveLength(0)
+  })
+
+  it('nennt bei genau aufgehender Rechnung alle Quellen', () => {
+    const rest = [q('a', 100), q('b', 150)]
+    expect(unverzichtbareQuellen(rest, { points: 250, qp: 0, erreicht: false })).toHaveLength(2)
   })
 })

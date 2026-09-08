@@ -276,6 +276,23 @@ export function bodenOhneLimit(bilanz: Bilanz): { quelle: BodenQuelle; jeEinheit
     .map((q) => ({ quelle: q.quelle, jeEinheit: punkteFuerEinheiten(q.quelle, 1) }))
 }
 
+/**
+ * Quellen, ohne die die Lücke rechnerisch nicht zu schließen ist.
+ *
+ * „Reicht insgesamt“ ist die halbe Wahrheit: Wenn das Gesamtangebot die Lücke
+ * nur knapp übersteigt, ist jede einzelne Quelle unverzichtbar — und man sollte
+ * wissen, welche, bevor man die falsche weglässt.
+ */
+export function unverzichtbareQuellen(
+  rest: RestKapazitaet[],
+  luecke: Luecke,
+): RestKapazitaet[] {
+  if (luecke.erreicht) return []
+  const gesamt = rest.reduce((s, r) => s + r.punkte.points, 0)
+  if (gesamt < luecke.points) return [] // Es reicht ohnehin nicht; keine ist allein schuld.
+  return rest.filter((r) => gesamt - r.punkte.points < luecke.points)
+}
+
 /** Was an Boden-Punkten im Zieljahr noch möglich wäre – nur begrenzte Quellen. */
 export function bodenRestKapazitaet(bilanz: Bilanz): RestKapazitaet[] {
   return bilanz.proQuelle

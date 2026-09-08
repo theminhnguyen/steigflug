@@ -10,6 +10,7 @@ import {
   bodenRestKapazitaet,
   erreichtAm,
   flugVorschlaege,
+  unverzichtbareQuellen,
 } from '../core/calc'
 import { datum, menge, zahl } from '../core/format'
 import { jahresfrist, naeheresJahr, offeneTermine } from '../core/fristen'
@@ -62,6 +63,7 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
   )
   const leer = daten.fluege.length + daten.boden.length === 0
   const ohneLimit = bodenOhneLimit(plan)
+  const unverzichtbar = unverzichtbareQuellen(rest, lueckePlan)
   const frist = jahresfrist(daten.zieljahr)
   const termine = useMemo(() => offeneTermine(regelwerk.termine ?? []), [regelwerk.termine])
 
@@ -271,6 +273,16 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
                 <b>Ohne weitere Flüge machbar</b>
                 Wenn du die oben genannten Boden-Punkte alle mitnimmst, steht {ziel.name}{' '}
                 auch ohne zusätzliche Flüge.
+                {unverzichtbar.length > 0 && (
+                  <>
+                    {' '}Dabei ist{' '}
+                    <strong>
+                      {unverzichtbar.map((u) => u.quelle.name).join(' und ')}
+                    </strong>{' '}
+                    unverzichtbar: Ohne {unverzichtbar.length === 1 ? 'diese Quelle' : 'diese Quellen'}{' '}
+                    geht die Rechnung nicht auf, egal was du sonst mitnimmst.
+                  </>
+                )}
               </div>
             </div>
           ) : (

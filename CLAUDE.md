@@ -261,6 +261,14 @@ real ein: geplant war 2027, näher dran war längst 2026.
 
 Vergangene Jahre bleiben dabei außen vor — dort lässt sich nichts mehr erreichen.
 
+## „Reicht insgesamt" ist die halbe Wahrheit
+
+`unverzichtbareQuellen()` nennt die Boden-Quellen, ohne die die Lücke
+rechnerisch nicht zu schließen ist. Übersteigt das Gesamtangebot die Lücke nur
+knapp, ist jede einzelne Quelle unverzichtbar — und man sollte wissen, welche,
+bevor man die falsche weglässt. Reicht es ohnehin nicht, schweigt die Funktion:
+dann ist keine Quelle allein schuld.
+
 ## Helligkeit
 
 Drei Zustände: Gerätevorgabe, immer hell, immer dunkel — Vorauswahl bleibt die
