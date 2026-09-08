@@ -78,7 +78,6 @@ export interface Punkte {
   qp: number
 }
 
-export const NULL_PUNKTE: Punkte = { points: 0, qp: 0 }
 
 /**
  * Zustandsänderungen laufen ausschließlich über eine Funktion des vorherigen

@@ -58,11 +58,6 @@ export function ohneGeloeschte<T extends Abgleichbar>(eintraege: T[]): T[] {
   return eintraege.filter((e) => !e.geloescht)
 }
 
-/** Markiert einen Eintrag als lokal geändert. */
-export function alsGeaendert<T extends Abgleichbar>(eintrag: T): T {
-  return { ...eintrag, dirty: true }
-}
-
 /** Sanftes Löschen statt Entfernen, damit die Löschung mitreist. */
 export function alsGeloescht<T extends Abgleichbar>(eintrag: T): T {
   return { ...eintrag, geloescht: true, dirty: true }

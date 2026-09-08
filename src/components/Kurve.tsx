@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { VerlaufPunkt } from '../core/calc'
 import type { Ziel } from '../rules'
 import { datumKurz, heuteIso, zahl } from '../core/format'
+import { anteilProzent, berechneSkala } from '../core/kurveskala'
 
 interface Props {
   verlauf: VerlaufPunkt[]
@@ -45,7 +46,7 @@ export default function Kurve({ verlauf, ziel, jahr }: Props) {
   const huelle = useRef<HTMLDivElement>(null)
   const [aktiv, setAktiv] = useState<number | null>(null)
 
-  const { stellen, obenPct, pfade, heuteX } = useMemo(() => {
+  const { stellen, obenPct, pfade, heuteX, stufen } = useMemo(() => {
     const start = Date.UTC(jahr, 0, 1)
     const jahresTage = (Date.UTC(jahr, 11, 31) - start) / 86_400_000 + 1
     const tagVon = (iso: string) => {
@@ -56,18 +57,22 @@ export default function Kurve({ verlauf, ziel, jahr }: Props) {
 
     const hoechst = verlauf.reduce(
       (m, v) =>
-        Math.max(m, (v.points / ziel.points) * 100, (v.qp / ziel.qualifyingPoints) * 100),
+        Math.max(
+          m,
+          anteilProzent(v.points, ziel.points),
+          anteilProzent(v.qp, ziel.qualifyingPoints),
+        ),
       100,
     )
-    // Auf glatte Stufen aufrunden, damit die Achse ganze Zahlen zeigt.
-    const obenPct = Math.ceil(Math.max(120, hoechst * 1.08) / 20) * 20
+    const skala = berechneSkala(hoechst)
+    const obenPct = skala.obenPct
 
     const x = (tag: number) => RAND.links + (tag / jahresTage) * FLAECHE.b
     const y = (pct: number) => RAND.oben + FLAECHE.h - (pct / obenPct) * FLAECHE.h
 
     const stellen: Stelle[] = verlauf.map((v) => {
-      const pctPoints = (v.points / ziel.points) * 100
-      const pctQp = (v.qp / ziel.qualifyingPoints) * 100
+      const pctPoints = anteilProzent(v.points, ziel.points)
+      const pctQp = anteilProzent(v.qp, ziel.qualifyingPoints)
       return {
         x: x(tagVon(v.datum)),
         yPoints: y(pctPoints),
@@ -120,6 +125,7 @@ export default function Kurve({ verlauf, ziel, jahr }: Props) {
       stellen,
       heuteX,
       obenPct,
+      stufen: skala.stufen,
       pfade: {
         festPoints: fest.length > 1 ? linie(fest, 'yPoints') : '',
         festQp: fest.length > 1 ? linie(fest, 'yQp') : '',
@@ -159,14 +165,12 @@ export default function Kurve({ verlauf, ziel, jahr }: Props) {
     setAktiv(naechste)
   }
 
-  const achsenStufen = Array.from({ length: obenPct / 20 + 1 }, (_, i) => i * 20)
-
   return (
     <>
       <div className="diagramm" ref={huelle}>
         <svg viewBox={`0 0 ${B} ${H}`} role="img" aria-label={`Anstieg der Punkte über ${jahr}`}>
           {/* Gitter: eine Stufe neben der Fläche, haarfein und durchgezogen */}
-          {achsenStufen.map((pct) => {
+          {stufen.map((pct) => {
             const y = RAND.oben + FLAECHE.h - (pct / obenPct) * FLAECHE.h
             return (
               <g key={pct}>

@@ -36,6 +36,17 @@ function leererFlug(jahr: number): Flug {
   }
 }
 
+/**
+ * Die Vorschlagsliste ist unveränderlich und wird deshalb genau einmal gebaut.
+ * Als Teil der Komponente entstünden bei jedem Tastendruck im Formular über
+ * 250 Element-Objekte neu, nur um anschließend unverändert zu bleiben.
+ */
+const FLUGHAFEN_OPTIONEN = Object.values(AIRPORTS).map((a) => (
+  <option key={a.iata} value={a.iata}>
+    {a.name}
+  </option>
+))
+
 /** Kleines Flugzeug für die Strecke zwischen den Flughäfen. */
 function FlugZeichen() {
   return (
@@ -59,10 +70,13 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
       ? entwurf.airline
       : null
 
-  const imJahr = sortiereSegmente(
-    ohneGeloeschte(daten.fluege).filter((f) => jahrVon(f.datum) === daten.zieljahr),
-  )
-  const andereJahre = ohneGeloeschte(daten.fluege).length - imJahr.length
+  // Nur neu sortieren, wenn sich die Daten ändern — nicht bei jedem Tastendruck
+  // im Formular darüber.
+  const { imJahr, andereJahre } = useMemo(() => {
+    const sichtbar = ohneGeloeschte(daten.fluege)
+    const jahr = sichtbar.filter((f) => jahrVon(f.datum) === daten.zieljahr)
+    return { imJahr: sortiereSegmente(jahr), andereJahre: sichtbar.length - jahr.length }
+  }, [daten.fluege, daten.zieljahr])
 
   const vorschlag = schaetzeStrecke(entwurf.von, entwurf.nach)
   const vorschau = punkteFuerFlug(regelwerk, entwurf)
@@ -483,13 +497,7 @@ export default function Fluege({ regelwerk, daten, setDaten }: Props) {
         )}
       </section>
 
-      <datalist id="airports">
-        {Object.values(AIRPORTS).map((a) => (
-          <option key={a.iata} value={a.iata}>
-            {a.name}
-          </option>
-        ))}
-      </datalist>
+      <datalist id="airports">{FLUGHAFEN_OPTIONEN}</datalist>
     </>
   )
 }

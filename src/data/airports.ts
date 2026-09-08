@@ -123,20 +123,6 @@ export function schaetzeStrecke(von: string, nach: string): StreckenVorschlag {
   }
 }
 
-/** Freitextsuche über IATA-Code und Name, für die Eingabefelder. */
-export function sucheAirports(begriff: string, limit = 8): Airport[] {
-  const q = begriff.trim().toLowerCase()
-  if (!q) return []
-  const treffer: Airport[] = []
-  for (const f of Object.values(AIRPORTS)) {
-    if (f.iata.toLowerCase().startsWith(q) || f.name.toLowerCase().includes(q)) {
-      treffer.push(f)
-      if (treffer.length >= limit) break
-    }
-  }
-  return treffer
-}
-
 export function airportLabel(iata: string): string {
   const f = AIRPORTS[iata.toUpperCase()]
   return f ? `${f.iata} · ${f.name}` : iata.toUpperCase()

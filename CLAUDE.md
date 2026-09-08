@@ -208,6 +208,29 @@ Airlines in den Daten sind vollintegriert, dort sind beide Werte ohnehin gleich.
 Ein Gegenbeweis bräuchte einen Flug mit einer nur teilintegrierten Airline
 (Star-Alliance-Partner). Bis dahin bleibt der Schalter in der Vorschau.
 
+## Rechenlast in Komponenten
+
+Formulare halten ihren Entwurf in eigenem Zustand — die Komponente zeichnet
+deshalb bei **jedem Tastendruck** neu. Alles Teure gehört dort in ein `useMemo`
+mit den Daten als Abhängigkeit, nicht in den Rumpf: Bilanz, Sortierung, Verlauf.
+
+Unveränderliche Listen gehören auf Modulebene, nicht in die Komponente. Die
+Flughafen-Vorschlagsliste erzeugte als Teil von `Fluege` über 250 Element-Objekte
+je Tastendruck, nur um unverändert zu bleiben.
+
+## Rechnen gehört nicht in die Ansicht
+
+Die Achsenberechnung der Kurve steckte in der Komponente und war deshalb als
+einzige Rechnung im Projekt ungetestet — genau dort schlummerte ein Absturz: Eine
+im Regelwerk auf null gesetzte Schwelle ergab eine unendliche Obergrenze und
+damit `Array.from({length: Infinity})`, also ein `RangeError` und eine weiße
+Seite. Jetzt in `src/core/kurveskala.ts` mit Tests, inklusive Deckelung der
+Gitterlinien.
+
+**Regel daraus:** Sobald in einer Komponente gerechnet wird — geteilt, skaliert,
+gerundet —, gehört das in `src/core/` und braucht einen Test. Division durch eine
+Nutzereingabe immer absichern; das Regelwerk lässt Nullen zu.
+
 ## Sprache
 
 Bezeichner, Kommentare und Oberfläche auf Deutsch. Fachbegriffe des Programms

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { AppDaten, BodenEintrag, SetDaten } from '../core/types'
 import type { Regelwerk } from '../rules'
 import { findeBodenQuelle } from '../rules'
@@ -38,13 +38,14 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
   const [bearbeitet, setBearbeitet] = useState<string | null>(null)
 
   const quelle = findeBodenQuelle(regelwerk, entwurf.quelle) ?? regelwerk.bodenQuellen[0]!
-  const bilanz = berechneBilanz(regelwerk, daten, 'plan')
+  const bilanz = useMemo(() => berechneBilanz(regelwerk, daten, 'plan'), [regelwerk, daten])
   const stand = bilanz.proQuelle.find((q) => q.quelle.id === quelle.id)
 
-  const imJahr = sortiereFuerAnzeige(
-    ohneGeloeschte(daten.boden).filter((b) => jahrVon(b.datum) === daten.zieljahr),
-  )
-  const andereJahre = ohneGeloeschte(daten.boden).length - imJahr.length
+  const { imJahr, andereJahre } = useMemo(() => {
+    const sichtbar = ohneGeloeschte(daten.boden)
+    const jahr = sichtbar.filter((b) => jahrVon(b.datum) === daten.zieljahr)
+    return { imJahr: sortiereFuerAnzeige(jahr), andereJahre: sichtbar.length - jahr.length }
+  }, [daten.boden, daten.zieljahr])
 
   const vorschau = punkteFuerEinheiten(quelle, entwurf.anzahl, entwurf.freieQp)
   // Der Grund fürs Sperren wird mitgeführt, damit er neben dem Knopf stehen kann:

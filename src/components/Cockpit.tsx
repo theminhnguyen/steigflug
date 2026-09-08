@@ -34,7 +34,10 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
 
   const lueckeIst = berechneLuecke(ist, ziel)
   const lueckePlan = berechneLuecke(plan, ziel)
-  const erreichtIst = erreichtAm(berechneVerlauf(regelwerk, daten, ziel, 'ist'))
+  const erreichtIst = useMemo(
+    () => erreichtAm(berechneVerlauf(regelwerk, daten, ziel, 'ist')),
+    [regelwerk, daten, ziel],
+  )
   const erreichtPlan = erreichtAm(verlauf)
   const tempo = berechneTempo(ist, daten.zieljahr)
 

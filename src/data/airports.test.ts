@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AIRPORTS, airportLabel, schaetzeStrecke, sucheAirports } from './airports'
+import { AIRPORTS, airportLabel, schaetzeStrecke } from './airports'
 
 describe('Flughafenliste', () => {
   it('liest jeden Eintrag vollständig ein', () => {
@@ -79,20 +79,6 @@ describe('schaetzeStrecke', () => {
 
   it('setzt keinen Grenzfall, wenn beide Flughäfen in Kerneuropa liegen', () => {
     expect(schaetzeStrecke('FRA', 'MAD').grenzfall).toBe(false)
-  })
-})
-
-describe('sucheAirports', () => {
-  it('findet über den Code', () => {
-    expect(sucheAirports('FR').some((a) => a.iata === 'FRA')).toBe(true)
-  })
-
-  it('findet über den Namen', () => {
-    expect(sucheAirports('new york').some((a) => a.iata === 'JFK')).toBe(true)
-  })
-
-  it('liefert bei leerer Eingabe nichts', () => {
-    expect(sucheAirports('  ')).toEqual([])
   })
 })
 

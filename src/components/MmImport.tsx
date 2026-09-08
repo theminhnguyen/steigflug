@@ -101,17 +101,23 @@ export default function MmImport({ daten, setDaten }: Props) {
 
   function uebernehmen() {
     if (!vorschau) return
-    const { neu, aktualisiert } = vorschau.plan
-    const nachId = new Map(aktualisiert.map((f) => [f.id, f]))
-    setDaten((d) => ({
-      ...d,
-      fluege: [...d.fluege.map((f) => nachId.get(f.id) ?? f), ...neu],
-    }))
+    let neu = 0
+    let ergaenzt = 0
+    setDaten((d) => {
+      // Bewusst hier noch einmal zusammengeführt statt mit dem Ergebnis der
+      // Vorschau: Zwischen Anzeige und Klick kann sich der Bestand geändert
+      // haben, und die Vorschau kannte ihn noch nicht.
+      const plan = verschmelze(d.fluege, vorschau.gelesen.fluege)
+      neu = plan.neu.length
+      ergaenzt = plan.aktualisiert.length
+      const nachId = new Map(plan.aktualisiert.map((f) => [f.id, f]))
+      return { ...d, fluege: [...d.fluege.map((f) => nachId.get(f.id) ?? f), ...plan.neu] }
+    })
     setRoh(null)
     setEingefuegt('')
     setMeldung({
       art: 'gut',
-      text: `${menge(neu.length, 'Flug', 'Flüge')} neu übernommen, ${menge(aktualisiert.length, 'Eintrag', 'Einträge')} ergänzt.`,
+      text: `${menge(neu, 'Flug', 'Flüge')} neu übernommen, ${menge(ergaenzt, 'Eintrag', 'Einträge')} ergänzt.`,
     })
   }
 

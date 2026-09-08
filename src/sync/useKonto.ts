@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../supabase/client'
 import { anmeldeRuecksprung } from '../supabase/config'
@@ -204,7 +204,7 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
     if (sitzung) void jetztAbgleichen()
   }, [sitzung, jetztAbgleichen])
 
-  const offen = offeneAenderungen(daten)
+  const offen = useMemo(() => offeneAenderungen(daten), [daten])
 
   // Offene Änderungen nach kurzer Ruhe hochladen, statt bei jedem Tastendruck.
   // Nach Fehlschlägen wächst die Wartezeit, sonst liefe die App bei einem
