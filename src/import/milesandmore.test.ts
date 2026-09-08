@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { istMilesAndMoreDatei, kennzeichen, leseSegmente, verschmelze } from './milesandmore'
+import {
+  istMilesAndMoreDatei,
+  kennzeichen,
+  leseSegmente,
+  pruefeGupDeutung,
+  verschmelze,
+} from './milesandmore'
 
 /** Nach dem Schema des Endpunkts, inklusive der aufgefüllten Textfelder. */
 const SEGMENT = {
@@ -224,5 +230,35 @@ describe('verschmelze', () => {
       datei([{ ...SEGMENT, OriginAirportCode: 'MUC', DestinationAirportCode: 'DUS' }]),
     ).fluege
     expect(verschmelze([bestandsflug()], rueck).neu).toHaveLength(1)
+  })
+})
+
+describe('pruefeGupDeutung', () => {
+  const QUAL = ['LH', 'OS', 'EW', 'LX', 'VL']
+  const mit = (over: Record<string, unknown>) => leseSegmente(datei([{ ...SEGMENT, ...over }])).fluege
+
+  it('bleibt offen, solange nur vollintegrierte Airlines vorkommen', () => {
+    // Genau der Fall der echten Kontodaten: 28 Zeilen, alle vollintegriert.
+    expect(pruefeGupDeutung(mit({}), QUAL).art).toBe('offen')
+  })
+
+  it('bestätigt die Deutung bei einer Airline ohne Qualifying Points', () => {
+    const b = pruefeGupDeutung(mit({ AirlineDesignatorCode: 'UA', StatusPoints: 20, GupPoints: 0 }), QUAL)
+    expect(b.art).toBe('bestaetigt')
+    if (b.art === 'bestaetigt') expect(b.beleg).toContain('UA')
+  })
+
+  it('widerlegt sie, wenn dort trotzdem GupPoints stehen', () => {
+    const b = pruefeGupDeutung(mit({ AirlineDesignatorCode: 'UA', StatusPoints: 20, GupPoints: 20 }), QUAL)
+    expect(b.art).toBe('widerlegt')
+  })
+
+  it('lässt Flüge ohne Punkte außen vor — die beweisen nichts', () => {
+    expect(pruefeGupDeutung(mit({ AirlineDesignatorCode: 'UA', StatusPoints: 0, GupPoints: 0 }), QUAL).art)
+      .toBe('offen')
+  })
+
+  it('achtet nicht auf Groß- und Kleinschreibung der Airline-Liste', () => {
+    expect(pruefeGupDeutung(mit({}), ['lh']).art).toBe('offen')
   })
 })

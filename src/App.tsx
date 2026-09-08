@@ -12,6 +12,7 @@ import Logo from './components/Logo'
 import { useKonto } from './sync/useKonto'
 import Aktualisierung from './components/Aktualisierung'
 import Thema from './components/Thema'
+import Fehlerfang from './components/Fehlerfang'
 
 const REITER = [
   { id: 'cockpit', name: 'Cockpit' },
@@ -169,7 +170,11 @@ export default function App() {
         </div>
       )}
 
+      {/* Nur der Inhalt wird aufgefangen, nicht die Reiterleiste — so lässt sich
+          nach einem Absturz weiterhin auf eine andere Ansicht wechseln. Der
+          Schlüssel sorgt dafür, dass ein Reiterwechsel den Fehler zurücksetzt. */}
       <main>
+        <Fehlerfang key={reiter}>
         {reiter === 'cockpit' && (
           <Cockpit
             regelwerk={regelwerk}
@@ -189,8 +194,14 @@ export default function App() {
           <Regeln regelwerk={regelwerk} daten={daten} setDaten={setDaten} />
         )}
         {reiter === 'daten' && (
-          <Daten daten={daten} setDaten={setDaten} konto={konto} />
+          <Daten
+            daten={daten}
+            setDaten={setDaten}
+            konto={konto}
+            qualifyingCodes={regelwerk.qualifyingAirlines.map((a) => a.code)}
+          />
         )}
+        </Fehlerfang>
       </main>
 
       <p className="fuss">

@@ -240,3 +240,42 @@ export function verschmelze(vorhandene: Flug[], gelesene: GelesenerFlug[]): Vers
 
   return { neu, aktualisiert, unveraendert }
 }
+
+export type GupBefund =
+  | { art: 'bestaetigt'; beleg: string }
+  | { art: 'widerlegt'; beleg: string }
+  | { art: 'offen' }
+
+/**
+ * Prüft, ob `GupPoints` tatsächlich die Qualifying Points sind.
+ *
+ * Beweiskräftig ist nur ein Flug mit einer Airline, die **keine** Qualifying
+ * Points liefert: Dort müssten die Points größer als null und die GupPoints
+ * gleich null sein. Bei den vollintegrierten Airlines sind beide Werte ohnehin
+ * identisch — daraus lässt sich nichts schließen, egal wie viele Zeilen es sind.
+ */
+export function pruefeGupDeutung(
+  gelesene: GelesenerFlug[],
+  qualifyingCodes: string[],
+): GupBefund {
+  const qualifiziert = new Set(qualifyingCodes.map((c) => c.toUpperCase()))
+
+  for (const g of gelesene) {
+    if (qualifiziert.has(g.flug.airline)) continue
+    const punkte = g.roh.statusPoints
+    const gup = g.roh.gupPoints
+    if (punkte === null || punkte <= 0 || gup === null) continue
+
+    const strecke = `${g.flug.von} → ${g.flug.nach} am ${g.flug.datum} mit ${g.flug.airline}`
+    return gup === 0
+      ? {
+          art: 'bestaetigt',
+          beleg: `${strecke}: ${punkte} Points, aber 0 GupPoints — genau das Verhalten von Qualifying Points.`,
+        }
+      : {
+          art: 'widerlegt',
+          beleg: `${strecke}: ${punkte} Points und ${gup} GupPoints, obwohl diese Airline keine Qualifying Points liefert.`,
+        }
+  }
+  return { art: 'offen' }
+}

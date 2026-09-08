@@ -19,9 +19,10 @@ interface Props {
   daten: AppDaten
   setDaten: SetDaten
   konto: Konto
+  qualifyingCodes: string[]
 }
 
-export default function Daten({ daten, setDaten, konto }: Props) {
+export default function Daten({ daten, setDaten, konto, qualifyingCodes }: Props) {
   const dateiFeld = useRef<HTMLInputElement>(null)
   const [meldung, setMeldung] = useState<{ art: 'gut' | 'fehler'; text: string } | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
@@ -83,7 +84,7 @@ export default function Daten({ daten, setDaten, konto }: Props) {
     <>
       <KontoBereich konto={konto} />
 
-      <MmImport daten={daten} setDaten={setDaten} />
+      <MmImport daten={daten} setDaten={setDaten} qualifyingCodes={qualifyingCodes} />
 
       <section className="karte">
         <h2>Sicherung</h2>

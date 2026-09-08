@@ -33,6 +33,13 @@ export interface BodenQuelle {
   hinweis: string
 }
 
+export interface Termin {
+  id: string
+  titel: string
+  datum: string
+  hinweis: string
+}
+
 export interface Regelwerk {
   version: string
   stand: string
@@ -44,6 +51,7 @@ export interface Regelwerk {
   qualifyingAirlines: Airline[]
   weitereAirlines: Airline[]
   bodenQuellen: BodenQuelle[]
+  termine: Termin[]
 }
 
 /** Das ausgelieferte Regelwerk. Nie direkt mutieren – Änderungen laufen über

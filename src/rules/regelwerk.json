@@ -1,5 +1,5 @@
 {
-  "version": "2026-09-07c",
+  "version": "2026-09-08",
   "stand": "7. September 2026",
   "hinweis": "Miles & More ändert die Bedingungen regelmäßig. Alle Werte hier sind in der App unter „Regelwerk“ überschreibbar, ohne dass Code geändert werden muss.",
   "quellen": [
@@ -248,6 +248,14 @@
       "freieEingabe": true,
       "maxPointsProJahr": null,
       "hinweis": "Für alles, was hier nicht abgebildet ist – etwa AirRail-Zugsegmente oder Aktionsgutschriften. Punkte direkt eintragen."
+    }
+  ],
+  "termine": [
+    {
+      "id": "kk-willkommen-ende",
+      "titel": "Willkommensbonus der Gold-Karte",
+      "datum": "2026-12-31",
+      "hinweis": "40 Points einmalig. Bedingung: zum Zeitpunkt der Beantragung noch KEIN Vielfliegerstatus — also vor dem FTL beantragen. Gutgeschrieben wird nach der ersten Kartenabrechnung, das braucht Vorlauf."
     }
   ]
 }

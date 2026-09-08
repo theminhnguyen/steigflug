@@ -5,6 +5,7 @@ import {
   berechneLuecke,
   berechneTempo,
   berechneVerlauf,
+  bodenOhneLimit,
   bodenRestKapazitaet,
   erreichtAm,
   flugVorschlaege,
@@ -516,5 +517,25 @@ describe('Airlines aus echten Kontodaten', () => {
     for (const code of ['LH', 'LX', 'OS', 'EW', 'VL', 'SN', 'EN', 'AZ', 'OU', 'LO', 'LG', '4Y']) {
       expect(punkteFuerFlug(R, flug({ airline: code })).qp, code).toBe(20)
     }
+  })
+})
+
+describe('bodenOhneLimit', () => {
+  it('nennt die Quellen ohne Jahreslimit samt Wert je Einheit', () => {
+    const b = berechneBilanz(R, daten(), 'plan')
+    const ohne = bodenOhneLimit(b)
+    const ev = ohne.find((o) => o.quelle.id === 'evoucher')!
+    expect(ev.jeEinheit).toEqual({ points: 50, qp: 50 })
+  })
+
+  it('lässt Quellen mit freier Eingabe weg — die kann man nicht beziffern', () => {
+    const ohne = bodenOhneLimit(berechneBilanz(R, daten(), 'plan'))
+    expect(ohne.map((o) => o.quelle.id)).not.toContain('sonstiges')
+    expect(ohne.map((o) => o.quelle.id)).not.toContain('co2')
+  })
+
+  it('nennt keine begrenzte Quelle', () => {
+    const ohne = bodenOhneLimit(berechneBilanz(R, daten(), 'plan'))
+    expect(ohne.map((o) => o.quelle.id)).not.toContain('marriott')
   })
 })

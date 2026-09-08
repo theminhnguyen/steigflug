@@ -237,6 +237,30 @@ eingetragen ist aber nicht dasselbe wie nicht erkannt. Jetzt entscheidet
 gerundet —, gehört das in `src/core/` und braucht einen Test. Division durch eine
 Nutzereingabe immer absichern; das Regelwerk lässt Nullen zu.
 
+## Abstürze fangen
+
+`Fehlerfang.tsx` liegt um den Inhalt, **nicht** um die Reiterleiste — nach einem
+Absturz muss sich noch auf eine andere Ansicht wechseln lassen. Der `key={reiter}`
+sorgt dafür, dass ein Reiterwechsel den Fehler zurücksetzt.
+
+Wichtiger als die Meldung ist der Ausweg: Die Daten liegen im Browser, und von
+der Fehlerseite aus lassen sie sich sichern, bevor irgendetwas anderes versucht
+wird.
+
+**Prüfen** lässt sich das nur mit einem absichtlich eingebauten Wurf. Danach
+zwingend entfernen und im gebauten Bündel gegenprüfen, dass nichts davon
+übrigbleibt.
+
+## Fristen und Jahresvergleich
+
+Der Status hängt an einem Kalenderjahr; die App zeigte aber nur Zustände, keine
+Uhr. `src/core/fristen.ts` liefert die verbleibenden Tage, die anstehenden
+Termine aus dem Regelwerk (`termine`) — und `naeheresJahr()` weist darauf hin,
+wenn in einem anderen Jahr weniger fehlt als im gewählten. Genau dieser Fall trat
+real ein: geplant war 2027, näher dran war längst 2026.
+
+Vergangene Jahre bleiben dabei außen vor — dort lässt sich nichts mehr erreichen.
+
 ## Helligkeit
 
 Drei Zustände: Gerätevorgabe, immer hell, immer dunkel — Vorauswahl bleibt die

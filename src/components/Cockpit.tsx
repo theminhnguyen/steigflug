@@ -3,6 +3,7 @@ import type { AppDaten, Strecke } from '../core/types'
 import type { Regelwerk, Ziel } from '../rules'
 import {
   berechneBilanz,
+  bodenOhneLimit,
   berechneLuecke,
   berechneTempo,
   berechneVerlauf,
@@ -11,6 +12,7 @@ import {
   flugVorschlaege,
 } from '../core/calc'
 import { datum, menge, zahl } from '../core/format'
+import { jahresfrist, naeheresJahr, offeneTermine } from '../core/fristen'
 import Balken from './Balken'
 import Kurve from './Kurve'
 
@@ -59,6 +61,25 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
     (v) => v.klasse === 'economy' && v.strecke === 'kontinental',
   )
   const leer = daten.fluege.length + daten.boden.length === 0
+  const ohneLimit = bodenOhneLimit(plan)
+  const frist = jahresfrist(daten.zieljahr)
+  const termine = useMemo(() => offeneTermine(regelwerk.termine ?? []), [regelwerk.termine])
+
+  // Wer auf ein künftiges Jahr plant, übersieht leicht, dass das laufende
+  // längst weiter ist. Deshalb alle Jahre mit Einträgen durchrechnen.
+  const naeher = useMemo(() => {
+    const jahre = new Set<number>([daten.zieljahr])
+    for (const e of [...daten.fluege, ...daten.boden]) {
+      if (!e.geloescht) jahre.add(Number(e.datum.slice(0, 4)))
+    }
+    const staende = [...jahre]
+      .filter((j) => Number.isFinite(j) && j > 2000 && j < 2100)
+      .map((jahr) => ({
+        jahr,
+        luecke: berechneLuecke(berechneBilanz(regelwerk, { ...daten, zieljahr: jahr }, 'plan'), ziel),
+      }))
+    return naeheresJahr(staende, daten.zieljahr)
+  }, [regelwerk, daten, ziel])
 
   return (
     <>
@@ -96,6 +117,54 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
               ? `Trage deine Flüge und Boden-Punkte ein, dann rechnet Steigflug dir den voraussichtlichen Termin für ${daten.zieljahr} aus.`
               : `Dazu ${zahl(lueckePlan.qp)} Qualifying Points. Mit dem, was eingetragen und geplant ist, reicht es für ${daten.zieljahr} noch nicht.`}
           </p>
+          {!frist.nochNichtBegonnen && !frist.abgelaufen && (
+            <p className="zusatz">
+              Noch <strong>{menge(frist.tageUebrig, 'Tag', 'Tage')}</strong> bis zum
+              31.12.{daten.zieljahr}.
+            </p>
+          )}
+          {frist.abgelaufen && (
+            <p className="zusatz">
+              {daten.zieljahr} ist vorbei — hier lässt sich nichts mehr erreichen.
+            </p>
+          )}
+        </section>
+      )}
+
+      {naeher && (
+        <div className="merker">
+          <span aria-hidden="true">📅</span>
+          <div>
+            <b>In {naeher.jahr} bist du näher dran</b>
+            Dort fehlen nur {zahl(naeher.luecke.points)} Points
+            {naeher.luecke.qp > 0
+              ? ` und ${zahl(naeher.luecke.qp)} Qualifying Points`
+              : ' — die Qualifying Points stehen dort bereits'}
+            . Stelle oben rechts das Jahr um, wenn du das prüfen willst.
+          </div>
+        </div>
+      )}
+
+      {termine.length > 0 && (
+        <section className="karte">
+          <h2>Fristen</h2>
+          <div className="liste">
+            {termine.map((t) => (
+              <div className="zeile" key={t.id}>
+                <div className="zeile-haupt">
+                  <div className="zeile-titel">
+                    {t.titel}
+                    {t.draengt && <span className="marke-geplant">bald</span>}
+                  </div>
+                  <div className="zeile-neben">{t.hinweis}</div>
+                </div>
+                <div className="punkte-block">
+                  <b>{zahl(t.tageUebrig)}</b>
+                  <span className="keine-qp">{t.tageUebrig === 1 ? 'Tag' : 'Tage'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
       )}
 
@@ -177,6 +246,22 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
                 Boden-Punkte eintragen
               </button>
             </>
+          )}
+
+          {ohneLimit.length > 0 && (
+            <p className="unter" style={{ margin: 'var(--s4) 0 0' }}>
+              Ohne festes Jahreslimit kommen dazu:{' '}
+              {ohneLimit
+                .map(
+                  (o) =>
+                    `${o.quelle.name} (${zahl(o.jeEinheit.points)} Points${
+                      o.jeEinheit.qp > 0 ? ` + ${zahl(o.jeEinheit.qp)} QP` : ''
+                    } je ${o.quelle.einheit})`,
+                )
+                .join(', ')}
+              . Wie viel davon geht, hängt daran, wie viele du hast — deshalb stehen sie
+              oben nicht mit.
+            </p>
           )}
 
           {nachBoden.erreicht ? (

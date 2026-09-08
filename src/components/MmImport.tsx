@@ -3,6 +3,7 @@ import type { AppDaten, SetDaten } from '../core/types'
 import {
   istMilesAndMoreDatei,
   leseSegmente,
+  pruefeGupDeutung,
   verschmelze,
   type Leseergebnis,
   type Verschmelzung,
@@ -12,6 +13,7 @@ import { datumKurz, menge, zahl } from '../core/format'
 interface Props {
   daten: AppDaten
   setDaten: SetDaten
+  qualifyingCodes: string[]
 }
 
 /**
@@ -40,7 +42,7 @@ const FELD_NAMEN: Record<string, string> = {
  * Vorschau, welche Felder überhaupt Werte hatten, und lässt die Deutung
  * umschalten, statt sie stillschweigend zu unterstellen.
  */
-export default function MmImport({ daten, setDaten }: Props) {
+export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
   const dateiFeld = useRef<HTMLInputElement>(null)
   const [roh, setRoh] = useState<{ inhalt: unknown; name: string } | null>(null)
   const [gupAlsQp, setGupAlsQp] = useState(true)
@@ -48,11 +50,19 @@ export default function MmImport({ daten, setDaten }: Props) {
   const [eingefuegt, setEingefuegt] = useState('')
   const [zeigeLesezeichen, setZeigeLesezeichen] = useState(false)
 
-  const vorschau = useMemo((): { gelesen: Leseergebnis; plan: Verschmelzung } | null => {
+  const vorschau = useMemo((): {
+    gelesen: Leseergebnis
+    plan: Verschmelzung
+    gup: ReturnType<typeof pruefeGupDeutung>
+  } | null => {
     if (!roh) return null
     const gelesen = leseSegmente(roh.inhalt, gupAlsQp)
-    return { gelesen, plan: verschmelze(daten.fluege, gelesen.fluege) }
-  }, [roh, gupAlsQp, daten.fluege])
+    return {
+      gelesen,
+      plan: verschmelze(daten.fluege, gelesen.fluege),
+      gup: pruefeGupDeutung(gelesen.fluege, qualifyingCodes),
+    }
+  }, [roh, gupAlsQp, daten.fluege, qualifyingCodes])
 
   /** Nimmt den Text entgegen, egal ob aus einer Datei oder eingefügt. */
   function verarbeite(text: string, herkunft: string) {
@@ -227,6 +237,23 @@ export default function MmImport({ daten, setDaten }: Props) {
               . Vergleiche die Zahlen unten mit deinem Kontoauszug, bevor du übernimmst.
             </div>
           </div>
+
+          {vorschau.gup.art !== 'offen' && (
+            <div className="merker">
+              <span aria-hidden="true">{vorschau.gup.art === 'bestaetigt' ? '✅' : '⚠️'}</span>
+              <div>
+                <b>
+                  {vorschau.gup.art === 'bestaetigt'
+                    ? 'GupPoints sind die Qualifying Points'
+                    : 'GupPoints sind NICHT die Qualifying Points'}
+                </b>
+                {vorschau.gup.beleg}{' '}
+                {vorschau.gup.art === 'bestaetigt'
+                  ? 'Der Schalter unten kann angehakt bleiben.'
+                  : 'Nimm den Haken unten heraus — sonst werden falsche Qualifying Points übernommen.'}
+              </div>
+            </div>
+          )}
 
           <label className="schalter" style={{ marginBottom: 'var(--s3)' }}>
             <input

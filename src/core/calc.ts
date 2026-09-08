@@ -265,6 +265,17 @@ export interface RestKapazitaet {
   punkte: Punkte
 }
 
+/**
+ * Quellen ohne Jahreslimit. Sie lassen sich nicht beziffern — wie viele
+ * eVoucher jemand hat, weiß nur er selbst — tauchten deshalb aber gar nicht
+ * auf und blieben als Möglichkeit unsichtbar.
+ */
+export function bodenOhneLimit(bilanz: Bilanz): { quelle: BodenQuelle; jeEinheit: Punkte }[] {
+  return bilanz.proQuelle
+    .filter((q) => q.einheitenFrei === Infinity && !q.quelle.freieEingabe)
+    .map((q) => ({ quelle: q.quelle, jeEinheit: punkteFuerEinheiten(q.quelle, 1) }))
+}
+
 /** Was an Boden-Punkten im Zieljahr noch möglich wäre – nur begrenzte Quellen. */
 export function bodenRestKapazitaet(bilanz: Bilanz): RestKapazitaet[] {
   return bilanz.proQuelle
