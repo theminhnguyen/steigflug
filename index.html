@@ -8,8 +8,26 @@
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <title>Steigflug</title>
-    <script type="module" crossorigin src="./assets/index-DA1m-Jh7.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DsrStQdZ.css">
+    <script>
+      /* Die Helligkeit muss feststehen, bevor irgendetwas gezeichnet wird —
+         sonst blitzt beim Öffnen kurz die falsche auf. Bewusst winzig, ohne
+         Abhängigkeiten und mit Notausgang, falls der Speicher gesperrt ist. */
+      (function () {
+        var erscheinung = 'hell';
+        try {
+          var wahl = localStorage.getItem('steigflug.thema');
+          erscheinung =
+            wahl === 'hell' || wahl === 'dunkel'
+              ? wahl
+              : matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dunkel'
+                : 'hell';
+        } catch (e) {}
+        document.documentElement.dataset.theme = erscheinung;
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index-D1NnYoE6.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-B30Q6Yjn.css">
   <link rel="manifest" href="./manifest.webmanifest"></head>
   <body>
     <div id="root"></div>
