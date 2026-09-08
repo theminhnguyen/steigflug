@@ -11,6 +11,7 @@ import Daten from './components/Daten'
 import Logo from './components/Logo'
 import { useKonto } from './sync/useKonto'
 import Aktualisierung from './components/Aktualisierung'
+import Thema from './components/Thema'
 
 const REITER = [
   { id: 'cockpit', name: 'Cockpit' },
@@ -89,6 +90,8 @@ export default function App() {
             </option>
           ))}
         </select>
+
+        <Thema />
 
         {!konto.laedtSitzung && (
           <button

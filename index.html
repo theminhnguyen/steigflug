@@ -8,6 +8,24 @@
     <link rel="icon" type="image/svg+xml" href="./icon.svg" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <title>Steigflug</title>
+    <script>
+      /* Die Helligkeit muss feststehen, bevor irgendetwas gezeichnet wird —
+         sonst blitzt beim Öffnen kurz die falsche auf. Bewusst winzig, ohne
+         Abhängigkeiten und mit Notausgang, falls der Speicher gesperrt ist. */
+      (function () {
+        var erscheinung = 'hell';
+        try {
+          var wahl = localStorage.getItem('steigflug.thema');
+          erscheinung =
+            wahl === 'hell' || wahl === 'dunkel'
+              ? wahl
+              : matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dunkel'
+                : 'hell';
+        } catch (e) {}
+        document.documentElement.dataset.theme = erscheinung;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

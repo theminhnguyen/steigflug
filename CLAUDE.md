@@ -237,6 +237,32 @@ eingetragen ist aber nicht dasselbe wie nicht erkannt. Jetzt entscheidet
 gerundet —, gehört das in `src/core/` und braucht einen Test. Division durch eine
 Nutzereingabe immer absichern; das Regelwerk lässt Nullen zu.
 
+## Helligkeit
+
+Drei Zustände: Gerätevorgabe, immer hell, immer dunkel — Vorauswahl bleibt die
+Gerätevorgabe. Die Wahl wird zu einer festen Erscheinung aufgelöst und als
+`data-theme` an das Wurzelelement geschrieben.
+
+**Die dunklen Farben stehen deshalb nur an einer Stelle** (`:root[data-theme='dunkel']`),
+nicht zusätzlich in einer Medienabfrage. Beides zu pflegen läuft mit der Zeit
+auseinander.
+
+**Entschieden wird vor dem ersten Zeichnen**, in einem winzigen Skript im
+Dokumentkopf von `index.html`. Ohne das blitzt beim Öffnen kurz die falsche
+Helligkeit auf. Dieses Skript ist die einzige Stelle, an der die Auflösungslogik
+doppelt steht — bewusst, weil es ohne Bündel auskommen muss.
+
+**Zwei Wege, dem Gerät zu folgen**, weil einer nicht reicht: das `change`-Ereignis
+der Medienabfrage, solange die App vorn ist, plus erneutes Prüfen bei Fokus und
+Sichtbarwerden. Schaltet das iPhone abends automatisch um, während die App im
+Hintergrund liegt, ist das Ereignis beim Zurückkehren längst verpasst.
+
+**Beim Prüfen:** Die Browservorschau ändert zwar den Wert der Medienabfrage, löst
+aber **kein** `change`-Ereignis aus — belegt damit, dass auch ein eigens
+registrierter Empfänger nichts erhält. Dieser Pfad lässt sich hier nicht prüfen;
+prüfbar ist der Weg über Fokus. Und `document.visibilityState` ist im
+Vorschau-Tab `hidden`, siehe [[react-unstable-callback-deps-focus-bug]].
+
 ## iOS-Eigenheiten im Layout
 
 Datumsfelder bringen auf iOS Safari eine eigene Mindestbreite mit, die sich

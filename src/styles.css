@@ -5,7 +5,7 @@
    ============================================================ */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
   /* ---- Flächen & Text ---- */
   --grund: #f2f5f9;
@@ -50,37 +50,40 @@
   --zeit: 260ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --grund: #070f18;
-    --flaeche: #12263a;
-    --flaeche-2: #17304a;
-    --flaeche-3: #1d3a58;
-    --rand: #24405f;
-    --rand-stark: #33587c;
-    --text: #eaf1f8;
-    --text-2: #a7bdd4;
-    --text-3: #7d94ad;
+/* Die dunklen Farben stehen ausschließlich hier — einmal statt zweimal, sonst
+   laufen die beiden Fassungen mit der Zeit auseinander. Welche Erscheinung
+   gilt, entscheidet ein kleines Skript im Dokumentkopf und schreibt sie als
+   data-theme, noch vor dem ersten Zeichnen. */
+:root[data-theme='dunkel'] {
+  color-scheme: dark;
+  --grund: #070f18;
+  --flaeche: #12263a;
+  --flaeche-2: #17304a;
+  --flaeche-3: #1d3a58;
+  --rand: #24405f;
+  --rand-stark: #33587c;
+  --text: #eaf1f8;
+  --text-2: #a7bdd4;
+  --text-3: #7d94ad;
 
-    --akzent: #5aa9f5;
-    --akzent-hell: #143755;
-    --akzent-text: #8cc4fa;
-    --qp: #f0b656;
-    --qp-hell: #3a2c14;
-    --gut: #52cf94;
-    --gut-hell: #10352a;
-    --warn: #ff9c6e;
-    --warn-hell: #3b2117;
-    --plan: #5b7592;
+  --akzent: #5aa9f5;
+  --akzent-hell: #143755;
+  --akzent-text: #8cc4fa;
+  --qp: #f0b656;
+  --qp-hell: #3a2c14;
+  --gut: #52cf94;
+  --gut-hell: #10352a;
+  --warn: #ff9c6e;
+  --warn-hell: #3b2117;
+  --plan: #5b7592;
 
-    --serie-points: #4a92dd;
-    --serie-qp: #bd872c;
-    --gitter: #21395420;
+  --serie-points: #4a92dd;
+  --serie-qp: #bd872c;
+  --gitter: #21395420;
 
-    --tiefe-1: 0 1px 2px rgb(0 0 0 / 40%);
-    --tiefe-2: 0 1px 2px rgb(0 0 0 / 40%), 0 6px 18px rgb(0 0 0 / 30%);
-    --tiefe-3: 0 2px 6px rgb(0 0 0 / 45%), 0 16px 40px rgb(0 0 0 / 40%);
-  }
+  --tiefe-1: 0 1px 2px rgb(0 0 0 / 40%);
+  --tiefe-2: 0 1px 2px rgb(0 0 0 / 40%), 0 6px 18px rgb(0 0 0 / 30%);
+  --tiefe-3: 0 2px 6px rgb(0 0 0 / 45%), 0 16px 40px rgb(0 0 0 / 40%);
 }
 
 * { box-sizing: border-box; }
@@ -790,3 +793,10 @@ kbd {
 .feld-reihe {
   grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
 }
+
+/* Der Helligkeitsknopf ist ein reiner Symbolknopf und darf schmaler sein. */
+.kopf-ampel.thema {
+  padding: 7px 9px;
+  color: var(--text-2);
+}
+.kopf-ampel.thema svg { display: block; }
