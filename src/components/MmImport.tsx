@@ -119,20 +119,22 @@ export default function MmImport({ daten, setDaten }: Props) {
     <section className="karte">
       <h2>Aus Miles &amp; More einlesen</h2>
       <p className="unter">
-        Dein Konto hat keinen Export-Knopf, gibt die eigene Flughistorie aber als Datei
-        heraus. Damit kommen die <strong>tatsächlich gutgeschriebenen</strong> Punkte in
-        die App statt der Berechnung.
+        Dein Konto hat keinen Export-Knopf, rückt die eigene Flughistorie aber heraus,
+        wenn man weiß wo. Damit kommen die{' '}
+        <strong>tatsächlich gutgeschriebenen</strong> Punkte in die App statt meiner
+        Berechnung.
       </p>
 
       <ol className="anleitung">
         <li>
-          Bei <a href="https://www.miles-and-more.com" target="_blank" rel="noopener noreferrer">
+          Bei{' '}
+          <a href="https://www.miles-and-more.com" target="_blank" rel="noopener noreferrer">
             miles-and-more.com
           </a>{' '}
           anmelden.
         </li>
         <li>
-          Im selben Browser{' '}
+          Im <strong>selben Browser</strong>{' '}
           <a
             href="https://api.travelid.lufthansa.com/flightstats/v3/me/segmentList?departureDateRange=10000%20months&size=10000&page=0"
             target="_blank"
@@ -140,9 +142,13 @@ export default function MmImport({ daten, setDaten }: Props) {
           >
             diese Adresse
           </a>{' '}
-          öffnen, alles markieren und kopieren.
+          öffnen. Es erscheint eine lange Textwand — das ist richtig so.
         </li>
-        <li>Hier einfügen — kein Sichern als Datei nötig.</li>
+        <li>
+          Alles markieren und kopieren: am Mac <kbd>⌘ A</kbd>, dann <kbd>⌘ C</kbd>. Am
+          iPhone lange auf den Text tippen, „Alles auswählen“, dann „Kopieren“.
+        </li>
+        <li>Hierher zurück und unten einfügen. Kein Sichern als Datei nötig.</li>
       </ol>
 
       <div className="feld">
@@ -306,16 +312,27 @@ export default function MmImport({ daten, setDaten }: Props) {
               dir nur die Handgriffe.
             </p>
             <ol className="anleitung">
-              <li>Den Text unten kopieren.</li>
+              <li>Unten auf „Text kopieren“ tippen.</li>
               <li>
-                Im Browser ein neues Lesezeichen anlegen, als Adresse den kopierten Text
-                einsetzen, Name etwa „Flughistorie holen“.
+                <strong>In Chrome:</strong> Lesezeichenleiste einblenden mit{' '}
+                <kbd>⌘ ⇧ B</kbd>, dann Rechtsklick auf die Leiste → „Seite hinzufügen…“.
+                Als Name „Flughistorie holen“, als <strong>URL</strong> den kopierten Text
+                einfügen, speichern.
+              </li>
+              <li>
+                <strong>In Safari:</strong> Irgendeine Seite mit <kbd>⌘ D</kbd> als
+                Favorit sichern. Dann Lesezeichen → Lesezeichen bearbeiten, den neuen
+                Eintrag anklicken und seine Adresse durch den kopierten Text ersetzen.
               </li>
               <li>
                 Bei miles-and-more.com angemeldet das Lesezeichen anklicken — die Historie
-                liegt danach in der Zwischenablage.
+                liegt danach in der Zwischenablage, fertig zum Einfügen.
               </li>
             </ol>
+            <p className="quellen" style={{ margin: '0 0 var(--s3)' }}>
+              Am iPhone lohnt das nicht: Lesezeichen dieser Art dort einzurichten ist
+              umständlicher als der Weg über Kopieren und Einfügen.
+            </p>
             <div className="feld">
               <textarea
                 readOnly
