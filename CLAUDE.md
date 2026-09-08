@@ -88,6 +88,19 @@ lassen. Alles, was rechnet oder anzeigt, filtert über `ohneGeloeschte()` bzw. d
 gehen auseinander; ein vom Browser gesetzter Stempel würde beim Zusammenführen
 Einträge verschlucken.
 
+**Zwei Zusammenführungen, zwei Regeln — nicht verwechseln.** `fuehreZusammen()`
+mischt Fremddaten ein; dort gewinnt eine ungesendete lokale Änderung zu Recht.
+`uebernimmErgebnis()` schreibt das *eigene* Abgleich-Ergebnis zurück; dort wäre
+dieselbe Regel fatal. Genau dieser Verwechslung ist der Abgleich zum Opfer
+gefallen: Das saubere Ergebnis wurde verworfen, weil der lokale Stand noch als
+geändert galt — die Einträge blieben auf ewig offen, die Ampel nie grün.
+`uebernimmErgebnis` vergleicht deshalb gegen den Stand zu Beginn des Abgleichs
+und behält nur, was sich seither wirklich geändert hat.
+
+Zusätzlich liegt ein Riegel gegen Endlosläufe im Hook: Senkt ein erfolgreicher
+Abgleich die Zahl der offenen Änderungen nicht, wächst die Wartezeit — sonst
+läuft die App im Sekundentakt gegen dieselbe Wand.
+
 **Die Zusammenführung liegt in `src/sync/merge.ts` und ist frei von Netzwerk.**
 Jede Regel dort hat einen Test. Neue Regeln gehören dorthin, nicht in `sync.ts`.
 

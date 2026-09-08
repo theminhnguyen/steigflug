@@ -84,3 +84,43 @@ export function offeneAenderungen(daten: AppDaten): number {
     zaehle(daten.fluege) + zaehle(daten.boden) + (einstellungenGeaendert(daten) ? 1 : 0)
   )
 }
+
+/** Vergleichsabbild eines Eintrags, um eine Änderung während des Abgleichs zu erkennen. */
+function abbild<T extends Abgleichbar>(e: T): string {
+  return JSON.stringify(e)
+}
+
+/**
+ * Schreibt das Ergebnis eines Abgleichs zurück in den Zustand.
+ *
+ * **Nicht** mit `fuehreZusammen` verwechseln: Dort ist die zweite Liste
+ * Fremddaten, und eine ungesendete lokale Änderung gewinnt zu Recht. Hier ist
+ * die zweite Liste das eigene, bereits abgeglichene Ergebnis — dieselbe Regel
+ * würde es verwerfen und die Einträge blieben auf ewig „offen“. Genau das war
+ * der Fall: Die Ampel wurde nie grün, und der Abgleich lief immer wieder los.
+ *
+ * Vorrang bekommt der aktuelle Stand nur dort, wo er sich seit dem Start des
+ * Abgleichs tatsächlich geändert hat — also bei Eingaben während des Wartens.
+ */
+export function uebernimmErgebnis<T extends Abgleichbar>(
+  aktuell: T[],
+  vorher: T[],
+  ergebnis: T[],
+): T[] {
+  const vorherNachId = new Map(vorher.map((e) => [e.id, abbild(e)]))
+  const ergebnisNachId = new Map(ergebnis.map((e) => [e.id, e]))
+  const zusammen = new Map<string, T>()
+
+  for (const e of aktuell) {
+    const waehrenddessenGeaendert = vorherNachId.get(e.id) !== abbild(e)
+    const ausErgebnis = ergebnisNachId.get(e.id)
+    zusammen.set(e.id, waehrenddessenGeaendert || !ausErgebnis ? e : ausErgebnis)
+  }
+
+  // Was der Abgleich neu vom Server geholt hat, kommt dazu.
+  for (const e of ergebnis) {
+    if (!zusammen.has(e.id)) zusammen.set(e.id, e)
+  }
+
+  return [...zusammen.values()]
+}

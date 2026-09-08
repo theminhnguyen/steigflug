@@ -4,7 +4,7 @@ import { supabase } from '../supabase/client'
 import { anmeldeRuecksprung } from '../supabase/config'
 import type { AppDaten, SetDaten } from '../core/types'
 import { abgleichen } from './sync'
-import { einstellungenAbbild, fuehreZusammen, offeneAenderungen } from './merge'
+import { einstellungenAbbild, offeneAenderungen, uebernimmErgebnis } from './merge'
 
 export type AbgleichZustand = 'ruht' | 'laeuft' | 'fehler'
 
@@ -79,6 +79,8 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
   })
   const [online, setOnline] = useState(() => navigator.onLine)
   const [fehlversuche, setFehlversuche] = useState(0)
+  // Zählt Abgleiche, die zwar durchliefen, aber nichts abgearbeitet haben.
+  const [stillstand, setStillstand] = useState(0)
 
   // Die Daten stehen in einer Ref, damit der Abgleich nicht bei jeder Eingabe
   // neu erzeugt wird — sonst liefe die Zeitschaltung endlos von vorn los.
@@ -153,9 +155,9 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
       const abbildVorher = einstellungenAbbild(vorher)
       const ergebnis = await abgleichen(vorher, nutzer.id)
 
-      // Während des Netzaufrufs kann weitergetippt worden sein. Deshalb wird das
-      // Ergebnis mit dem inzwischen aktuellen Stand zusammengeführt statt ihn zu
-      // ersetzen — frische Eingaben gewinnen und gehen beim nächsten Mal mit.
+      // Das Ergebnis übernehmen — aber nicht über Eingaben bügeln, die während
+      // des Netzaufrufs entstanden sind. Dafür wird gegen den Stand zu Beginn
+      // verglichen: Nur was sich seither geändert hat, behält seine Fassung.
       setDaten((aktuell) => {
         // Gilt auch für die Einstellungen: Wer währenddessen das Zieljahr
         // umstellt, soll es hinterher nicht zurückgesetzt vorfinden.
@@ -174,12 +176,19 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
               regelwerkOverrides: ergebnis.daten.regelwerkOverrides,
               einstellungenGesendet: ergebnis.daten.einstellungenGesendet,
             }
-        return {
+        const neu = {
           ...aktuell,
           ...einstellungen,
-          fluege: fuehreZusammen(aktuell.fluege, ergebnis.daten.fluege).lokal,
-          boden: fuehreZusammen(aktuell.boden, ergebnis.daten.boden).lokal,
+          fluege: uebernimmErgebnis(aktuell.fluege, vorher.fluege, ergebnis.daten.fluege),
+          boden: uebernimmErgebnis(aktuell.boden, vorher.boden, ergebnis.daten.boden),
         }
+        // Sicherung gegen Endlosläufe: Wenn ein erfolgreicher Abgleich die Zahl
+        // der offenen Änderungen nicht senkt, stimmt etwas nicht — dann lieber
+        // seltener versuchen als im Sekundentakt gegen dieselbe Wand.
+        const offenVorher = offeneAenderungen(aktuell)
+        const offenNachher = offeneAenderungen(neu)
+        setStillstand((n) => (offenNachher > 0 && offenNachher >= offenVorher ? n + 1 : 0))
+        return neu
       })
       const jetzt = new Date().toISOString()
       setLetzterAbgleich(jetzt)
@@ -211,10 +220,10 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
   // dauerhaften Fehler alle 2,5 Sekunden gegen dieselbe Wand.
   useEffect(() => {
     if (!sitzung || !online || offen === 0) return
-    const wartezeit = 2500 * 2 ** Math.min(fehlversuche, 5)
+    const wartezeit = 2500 * 2 ** Math.min(fehlversuche + stillstand, 6)
     const zeit = window.setTimeout(() => void jetztAbgleichen(), wartezeit)
     return () => window.clearTimeout(zeit)
-  }, [sitzung, online, offen, fehlversuche, jetztAbgleichen])
+  }, [sitzung, online, offen, fehlversuche, stillstand, jetztAbgleichen])
 
   // Zurück im Netz: nachholen.
   useEffect(() => {
@@ -226,6 +235,7 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
   const anmelden = useCallback(async () => {
     setFehler(null)
     setFehlversuche(0)
+    setStillstand(0)
     merker.setzen(ANMELDE_VERSUCH)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -244,6 +254,7 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
     setZustand('ruht')
     setFehler(null)
     setFehlversuche(0)
+    setStillstand(0)
     merker.loeschen(ANMELDE_VERSUCH)
   }, [])
 
