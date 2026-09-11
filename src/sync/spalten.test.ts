@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { bodenZuZeile, flugZuZeile, zeileZuBoden, zeileZuFlug } from './sync'
-import type { BodenEintrag, Flug } from '../core/types'
+import {
+  bodenZuZeile,
+  flugZuZeile,
+  karteZuZeile,
+  kollektionZuZeile,
+  zeileZuBoden,
+  zeileZuFlug,
+  zeileZuKarte,
+  zeileZuKollektion,
+} from './sync'
+import type { BodenEintrag, Flug, UptripKarte, UptripKollektion } from '../core/types'
 
 /**
  * Diese Namen stammen aus der echten Datenbank (information_schema).
@@ -16,6 +25,27 @@ const SPALTEN_BODEN = [
   'user_id', 'id', 'datum', 'quelle', 'anzahl', 'freie_qp', 'geplant', 'notiz',
   'geloescht', 'geaendert_am', 'korrektur_points', 'korrektur_qp', 'herkunft',
 ]
+
+const SPALTEN_KARTEN = [
+  'user_id', 'id', 'name', 'art', 'original', 'datum', 'flug', 'kollektion',
+  'geloescht', 'geaendert_am',
+]
+const SPALTEN_KOLLEKTIONEN = [
+  'user_id', 'id', 'name', 'belohnung', 'benoetigt', 'mindest_originale', 'points',
+  'qp', 'bringt_status', 'eingeloest', 'geloescht', 'geaendert_am',
+]
+
+const KARTE: UptripKarte = {
+  id: 'k1', name: 'Düsseldorf', art: 'stadt', original: true, datum: '2026-08-14',
+  flug: 'LH 2016 · MUC → DUS', kollektion: 'ftl', geaendertAm: '2026-09-01T10:00:00Z',
+  dirty: true, geloescht: false,
+}
+
+const KOLLEKTION: UptripKollektion = {
+  id: 'ftl', name: 'Frequent Traveller', belohnung: 'FTL-Status', benoetigt: 50,
+  mindestOriginale: 40, points: 0, qp: 0, bringtStatus: true, eingeloest: false,
+  geaendertAm: '2026-09-01T10:00:00Z', dirty: true, geloescht: false,
+}
 
 const FLUG: Flug = {
   id: 'f1', datum: '2027-02-15', von: 'DUS', nach: 'MUC', airline: 'LH',
@@ -100,5 +130,41 @@ describe('Hin und zurück', () => {
     const b = zeileZuBoden({ id: 'y' })
     expect(b.anzahl).toBe(0)
     expect(Number.isNaN(b.anzahl)).toBe(false)
+  })
+})
+
+describe('Uptrip-Album in der Datenbank', () => {
+  const faelle = [
+    ['Karten', karteZuZeile(KARTE, 'u1'), SPALTEN_KARTEN],
+    ['Kollektionen', kollektionZuZeile(KOLLEKTION, 'u1'), SPALTEN_KOLLEKTIONEN],
+  ] as const
+
+  for (const [name, zeile, spalten] of faelle) {
+    it(`schreibt ${name} nur in Spalten, die es wirklich gibt — und jede davon`, () => {
+      expect([...Object.keys(zeile)].sort()).toEqual(
+        spalten.filter((s) => s !== 'geaendert_am').sort(),
+      )
+    })
+  }
+
+  it('übersteht eine Karte den Weg in die Datenbank und zurück unverändert', () => {
+    const zeile = { ...karteZuZeile(KARTE, 'u1'), geaendert_am: '2026-09-11T08:00:00Z' }
+    expect(zeileZuKarte(zeile)).toEqual({ ...KARTE, geaendertAm: '2026-09-11T08:00:00Z', dirty: false })
+  })
+
+  it('übersteht eine Kollektion den Weg unverändert', () => {
+    const zeile = { ...kollektionZuZeile(KOLLEKTION, 'u1'), geaendert_am: '2026-09-11T08:00:00Z' }
+    expect(zeileZuKollektion(zeile)).toEqual({
+      ...KOLLEKTION,
+      geaendertAm: '2026-09-11T08:00:00Z',
+      dirty: false,
+    })
+  })
+
+  it('kommt mit unvollständigen Zeilen klar', () => {
+    expect(zeileZuKarte({ id: 'x' })).toMatchObject({ art: 'spezial', original: false, kollektion: '' })
+    const k = zeileZuKollektion({ id: 'y', benoetigt: 'kaputt' })
+    expect(k.benoetigt).toBe(0)
+    expect(Number.isNaN(k.mindestOriginale)).toBe(false)
   })
 })

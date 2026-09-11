@@ -1,4 +1,4 @@
-import type { AppDaten, BodenEintrag, Flug, SyncFelder } from '../core/types'
+import type { AppDaten, SyncFelder } from '../core/types'
 
 /** Gemeinsamer Nenner von Flug und BodenEintrag für den Abgleich. */
 export type Abgleichbar = SyncFelder & { id: string }
@@ -78,10 +78,14 @@ export function einstellungenGeaendert(daten: AppDaten): boolean {
 
 /** Wie viele Änderungen auf den nächsten Abgleich warten. */
 export function offeneAenderungen(daten: AppDaten): number {
-  const zaehle = (liste: (Flug | BodenEintrag)[]) =>
+  const zaehle = (liste: Abgleichbar[]) =>
     liste.filter((e) => e.dirty || e.geaendertAm === '').length
   return (
-    zaehle(daten.fluege) + zaehle(daten.boden) + (einstellungenGeaendert(daten) ? 1 : 0)
+    zaehle(daten.fluege) +
+    zaehle(daten.boden) +
+    zaehle(daten.uptripKarten) +
+    zaehle(daten.uptripKollektionen) +
+    (einstellungenGeaendert(daten) ? 1 : 0)
   )
 }
 

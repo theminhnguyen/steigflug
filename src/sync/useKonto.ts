@@ -181,6 +181,16 @@ export function useKonto(daten: AppDaten, setDaten: SetDaten): Konto {
           ...einstellungen,
           fluege: uebernimmErgebnis(aktuell.fluege, vorher.fluege, ergebnis.daten.fluege),
           boden: uebernimmErgebnis(aktuell.boden, vorher.boden, ergebnis.daten.boden),
+          uptripKarten: uebernimmErgebnis(
+            aktuell.uptripKarten,
+            vorher.uptripKarten,
+            ergebnis.daten.uptripKarten,
+          ),
+          uptripKollektionen: uebernimmErgebnis(
+            aktuell.uptripKollektionen,
+            vorher.uptripKollektionen,
+            ergebnis.daten.uptripKollektionen,
+          ),
         }
         // Sicherung gegen Endlosläufe: Wenn ein erfolgreicher Abgleich die Zahl
         // der offenen Änderungen nicht senkt, stimmt etwas nicht — dann lieber

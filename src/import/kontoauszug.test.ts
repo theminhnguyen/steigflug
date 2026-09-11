@@ -379,7 +379,8 @@ describe('verschmelzeBuchungen', () => {
     const plan = verschmelzeBuchungen([eintrag({})], [echt()])
     const daten: AppDaten = {
       schema: 1, zieljahr: 2026, zielStatus: 'frequent-traveller', fluege: [],
-      boden: plan.erfuellt.map((x) => x.nachher), regelwerkOverrides: {}, einstellungenGesendet: '',
+      boden: plan.erfuellt.map((x) => x.nachher), uptripKarten: [], uptripKollektionen: [],
+      regelwerkOverrides: {}, einstellungenGesendet: '',
     }
     const m = berechneBilanz(BASIS_REGELWERK, daten, 'plan').proQuelle.find((q) => q.quelle.id === 'marriott')!
     expect(m.punkte.points).toBe(20)

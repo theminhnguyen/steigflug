@@ -70,6 +70,8 @@ function daten(over: Partial<AppDaten> = {}): AppDaten {
     zielStatus: 'frequent-traveller',
     fluege: [],
     boden: [],
+    uptripKarten: [],
+    uptripKollektionen: [],
     regelwerkOverrides: {},
     einstellungenGesendet: '',
     ...over,

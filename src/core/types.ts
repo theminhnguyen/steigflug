@@ -62,6 +62,43 @@ export interface BodenEintrag extends SyncFelder {
   herkunft: string
 }
 
+export type KartenArt = 'stadt' | 'airline' | 'flugzeug' | 'spezial'
+
+/** Eine Sammelkarte aus der Uptrip-App, von Hand ins Album übertragen. */
+export interface UptripKarte extends SyncFelder {
+  id: string
+  /** wie auf der Karte, etwa „Munich“ oder „Airbus A319“ */
+  name: string
+  art: KartenArt
+  /** Aus einem eigenen Flug. Die Status-Kollektion verlangt eine Mindestzahl davon. */
+  original: boolean
+  /** Datum laut Karte, darf leer sein */
+  datum: string
+  /** Flug oder Anlass laut Karte, etwa „VL 2018 · MUC → DUS“ */
+  flug: string
+  /** ID der Kollektion, der die Karte zugeordnet ist; leer = frei */
+  kollektion: string
+}
+
+/** Eine Kollektion in der Uptrip-App. */
+export interface UptripKollektion extends SyncFelder {
+  id: string
+  name: string
+  /** Belohnung im Wortlaut, etwa „Lounge-Gutschein“ */
+  belohnung: string
+  /** Wie viele Karten die Kollektion braucht */
+  benoetigt: number
+  /** Wie viele davon Originale aus eigenen Flügen sein müssen */
+  mindestOriginale: number
+  /** Status-Punkte der Belohnung, falls es welche gibt */
+  points: number
+  qp: number
+  /** Die Kollektion bringt den Status selbst (Frequent Traveller) */
+  bringtStatus: boolean
+  /** Eingelöst — die Karten darin sind in der App verbraucht */
+  eingeloest: boolean
+}
+
 export interface AppDaten {
   /** Schema-Version für spätere Migrationen */
   schema: number
@@ -71,6 +108,8 @@ export interface AppDaten {
   zielStatus: string
   fluege: Flug[]
   boden: BodenEintrag[]
+  uptripKarten: UptripKarte[]
+  uptripKollektionen: UptripKollektion[]
   /** Nutzer-Überschreibungen des Regelwerks, teilweise Struktur */
   regelwerkOverrides: Record<string, unknown>
   /**

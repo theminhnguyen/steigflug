@@ -47,6 +47,20 @@ export interface Termin {
   hinweis: string
 }
 
+/** Regeln der Uptrip-App, soweit das Album sie braucht. */
+export interface UptripRegeln {
+  /** Originalkarten, die Uptrip je geflogenem Segment vergibt */
+  kartenJeSegment: number
+  /** Vorlage für die Kollektion, die den Status selbst bringt */
+  statusKollektion: {
+    name: string
+    belohnung: string
+    benoetigt: number
+    mindestOriginale: number
+  }
+  hinweis: string
+}
+
 export interface Regelwerk {
   version: string
   stand: string
@@ -59,6 +73,7 @@ export interface Regelwerk {
   weitereAirlines: Airline[]
   bodenQuellen: BodenQuelle[]
   termine: Termin[]
+  uptrip: UptripRegeln
 }
 
 /** Das ausgelieferte Regelwerk. Nie direkt mutieren – Änderungen laufen über

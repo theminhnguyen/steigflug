@@ -174,6 +174,10 @@ einer Eingabe wäre schlimmer als ein Tag Rückstand.
 Der erste Besuch einer Seite wird von keinem Service Worker gesteuert. Ein
 Aktualisierungstest muss vorher zweimal laden, sonst prüft man einen Randfall.
 
+Die halbstündliche Prüfung fängt Fehlschläge ab. `navigator.onLine` ist auch im
+Funkloch oder im WLAN-Portal wahr; ohne `.catch` landete jeder Fehlschlag als
+unbehandelter Fehler in der Konsole.
+
 ## Import aus Miles & More
 
 `src/import/milesandmore.ts` liest die eigene Flughistorie aus dem Konto:
@@ -273,6 +277,40 @@ Marriott- oder Kreditkarten-Zeilen vor. `schlageQuelleVor` rät aus Partner und
 Text, die Vorschau lässt jede Zeile umstellen. Sobald echte Zeilen vorliegen:
 Muster und Tests daran prüfen — und die Frage klären, ob Moxy 20 oder 40 Points
 bringt.
+
+## Uptrip-Sammelalbum
+
+Uptrip lässt sich **nicht** auslesen — geprüft, nicht vermutet: nur App, keine
+Website, keine Schnittstelle. Auf der Polygon-Blockchain steht eine Karte nur,
+wenn der Nutzer sie selbst in eine eigene Wallet überträgt (laut einer
+Auswertung von 2025 unter 0,3 % der Konten). Den Datenverkehr der App
+mitzuschneiden hieße, ein fremdes Zertifikat aufs iPhone zu bringen — abgelehnt.
+Das Album wird deshalb von Hand gepflegt: `src/core/uptrip.ts` rechnet,
+`Uptrip.tsx` zeigt.
+
+- **Zählweise wie die App.** Die Status-Kollektion verlangt 50 Karten, davon
+  40 Originale. Weitere Karten füllen nur die Plätze ohne Original-Pflicht,
+  Originale dagegen jeden Platz: 4 Originale + 6 weitere = „10/50“. Am
+  Screenshot des Nutzers geprüft, nicht aus Artikeln übernommen.
+- **Die Punkte einer Kollektion zählen nicht aus dem Album.** Sie kommen über
+  den Kontoauszug-Import, sobald Miles & More sie gutschreibt; beides zu
+  zählen wäre doppelt.
+- **Karten eingelöster Kollektionen sind verbraucht**, Karten gelöschter
+  Kollektionen wieder frei.
+- **Programmregeln im Regelwerk** (`uptrip`): Karten je Segment und die Vorlage
+  der Status-Kollektion. Durch null Karten je Segment wird nie geteilt.
+- **Der Satz im Cockpit entsteht in `uptripWegSatz()`** mit Tests — im JSX
+  stand sonst „noch 0 Flugsegmente“, sobald nur noch beliebige Karten fehlen.
+- **Neuanmelder dürfen nur zwei frühere Flüge nachtragen.** Beim Nutzer stehen
+  deshalb von 18 Segmenten aus 2026 nur 2 in Uptrip; der Rest ist für Uptrip
+  verloren. Wer den Uptrip-Weg bewertet, rechnet ab dem Anmeldetag.
+
+Abgeglichen wird über `sf_uptrip_karten` und `sf_uptrip_kollektionen` nach
+denselben Regeln wie Flüge und Boden. Alle vier Tabellen laufen durch
+`gleicheTabelleAb()` in `sync.ts` — eine neue Tabelle braucht dort eine Zeile,
+dazu Einträge in `offeneAenderungen()` und im Rückschreiben in `useKonto.ts`.
+Fehlt eins davon, bleibt die Ampel ewig gelb oder Eingaben gehen beim
+Abgleich verloren.
 
 ## Rechenlast in Komponenten
 

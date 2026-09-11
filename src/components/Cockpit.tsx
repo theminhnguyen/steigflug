@@ -12,7 +12,8 @@ import {
   flugVorschlaege,
   unverzichtbareQuellen,
 } from '../core/calc'
-import { datum, menge, zahl } from '../core/format'
+import { datum, heuteIso, menge, zahl } from '../core/format'
+import { uptripWeg, uptripWegSatz } from '../core/uptrip'
 import { jahresfrist, naeheresJahr, offeneTermine } from '../core/fristen'
 import Balken from './Balken'
 import Kurve from './Kurve'
@@ -23,11 +24,12 @@ interface Props {
   ziel: Ziel
   aufFluege: () => void
   aufBoden: () => void
+  aufUptrip: () => void
 }
 
 const KURZ_DATUM = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short' })
 
-export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }: Props) {
+export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden, aufUptrip }: Props) {
   const ist = useMemo(() => berechneBilanz(regelwerk, daten, 'ist'), [regelwerk, daten])
   const plan = useMemo(() => berechneBilanz(regelwerk, daten, 'plan'), [regelwerk, daten])
   const verlauf = useMemo(
@@ -65,6 +67,17 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
   const ohneLimit = bodenOhneLimit(plan)
   const unverzichtbar = unverzichtbareQuellen(rest, lueckePlan)
   const frist = jahresfrist(daten.zieljahr)
+  const weg = useMemo(
+    () =>
+      uptripWeg(
+        daten.uptripKollektionen,
+        daten.uptripKarten,
+        daten.fluege,
+        heuteIso(),
+        regelwerk.uptrip.kartenJeSegment,
+      ),
+    [daten.uptripKollektionen, daten.uptripKarten, daten.fluege, regelwerk.uptrip.kartenJeSegment],
+  )
   const termine = useMemo(() => offeneTermine(regelwerk.termine ?? []), [regelwerk.termine])
 
   // Wer auf ein künftiges Jahr plant, übersieht leicht, dass das laufende
@@ -143,6 +156,24 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden }:
               ? ` und ${zahl(naeher.luecke.qp)} Qualifying Points`
               : ' — die Qualifying Points stehen dort bereits'}
             . Stelle oben rechts das Jahr um, wenn du das prüfen willst.
+          </div>
+        </div>
+      )}
+
+      {weg && !lueckeIst.erreicht && (
+        <div className="merker">
+          <span aria-hidden="true">🃏</span>
+          <div>
+            <b>Zweiter Weg: Uptrip-Kollektion „{weg.stand.kollektion.name}“</b>
+            {uptripWegSatz(weg, nachBoden.erreicht ? 0 : (economyKurz?.segmente ?? null))}{' '}
+            <button
+              type="button"
+              className="knopf leise klein"
+              style={{ padding: 0 }}
+              onClick={aufUptrip}
+            >
+              Zum Album
+            </button>
           </div>
         </div>
       )}

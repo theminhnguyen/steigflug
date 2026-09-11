@@ -6,6 +6,7 @@ import { BASIS_REGELWERK, findeZiel, mitOverrides } from './rules'
 import Cockpit from './components/Cockpit'
 import Fluege from './components/Fluege'
 import Boden from './components/Boden'
+import Uptrip from './components/Uptrip'
 import Regeln from './components/Regeln'
 import Daten from './components/Daten'
 import Logo from './components/Logo'
@@ -18,6 +19,7 @@ const REITER = [
   { id: 'cockpit', name: 'Cockpit' },
   { id: 'fluege', name: 'Flüge' },
   { id: 'boden', name: 'Boden' },
+  { id: 'uptrip', name: 'Uptrip' },
   { id: 'regeln', name: 'Regeln' },
   { id: 'daten', name: 'Daten' },
 ] as const
@@ -182,6 +184,7 @@ export default function App() {
             ziel={ziel}
             aufFluege={() => setReiter('fluege')}
             aufBoden={() => setReiter('boden')}
+            aufUptrip={() => setReiter('uptrip')}
           />
         )}
         {reiter === 'fluege' && (
@@ -189,6 +192,9 @@ export default function App() {
         )}
         {reiter === 'boden' && (
           <Boden regelwerk={regelwerk} daten={daten} setDaten={setDaten} />
+        )}
+        {reiter === 'uptrip' && (
+          <Uptrip regelwerk={regelwerk} daten={daten} setDaten={setDaten} />
         )}
         {reiter === 'regeln' && (
           <Regeln regelwerk={regelwerk} daten={daten} setDaten={setDaten} />

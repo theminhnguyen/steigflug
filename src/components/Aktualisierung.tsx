@@ -18,7 +18,9 @@ export default function Aktualisierung() {
     onRegisteredSW(_pfad, registrierung) {
       if (!registrierung) return
       setInterval(() => {
-        if (navigator.onLine) void registrierung.update()
+        // onLine ist auch im Funkloch oder im WLAN-Portal wahr. Ein Fehlschlag
+        // wäre ohne catch ein unbehandelter Fehler; der nächste Versuch kommt ohnehin.
+        if (navigator.onLine) registrierung.update().catch(() => undefined)
       }, PRUEFABSTAND)
     },
   })

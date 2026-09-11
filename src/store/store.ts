@@ -1,4 +1,12 @@
-import type { AppDaten, BodenEintrag, Flug, SyncFelder } from '../core/types'
+import type {
+  AppDaten,
+  BodenEintrag,
+  Flug,
+  SyncFelder,
+  UptripKarte,
+  UptripKollektion,
+} from '../core/types'
+import { alsKartenArt } from '../core/uptrip'
 
 const SCHLUESSEL = 'steigflug.daten.v1'
 export const SCHEMA_VERSION = 1
@@ -10,6 +18,8 @@ export function leereDaten(zieljahr: number): AppDaten {
     zielStatus: 'frequent-traveller',
     fluege: [],
     boden: [],
+    uptripKarten: [],
+    uptripKollektionen: [],
     regelwerkOverrides: {},
     einstellungenGesendet: '',
   }
@@ -34,6 +44,8 @@ export function normalisiere(roh: unknown, fallbackJahr: number): AppDaten {
   const jahr = Number(d.zieljahr)
   const fluege = Array.isArray(d.fluege) ? d.fluege : []
   const boden = Array.isArray(d.boden) ? d.boden : []
+  const karten = Array.isArray(d.uptripKarten) ? d.uptripKarten : []
+  const kollektionen = Array.isArray(d.uptripKollektionen) ? d.uptripKollektionen : []
 
   return {
     schema: SCHEMA_VERSION,
@@ -73,6 +85,32 @@ export function normalisiere(roh: unknown, fallbackJahr: number): AppDaten {
         ...syncFelder(b),
       }),
     ),
+    uptripKarten: karten.map(
+      (k: Partial<UptripKarte>): UptripKarte => ({
+        id: k.id ?? neueId(),
+        name: typeof k.name === 'string' ? k.name : '',
+        art: alsKartenArt(k.art),
+        original: Boolean(k.original),
+        datum: typeof k.datum === 'string' ? k.datum : '',
+        flug: typeof k.flug === 'string' ? k.flug : '',
+        kollektion: typeof k.kollektion === 'string' ? k.kollektion : '',
+        ...syncFelder(k),
+      }),
+    ),
+    uptripKollektionen: kollektionen.map(
+      (k: Partial<UptripKollektion>): UptripKollektion => ({
+        id: k.id ?? neueId(),
+        name: typeof k.name === 'string' ? k.name : '',
+        belohnung: typeof k.belohnung === 'string' ? k.belohnung : '',
+        benoetigt: anzahlAus(k.benoetigt),
+        mindestOriginale: anzahlAus(k.mindestOriginale),
+        points: anzahlAus(k.points),
+        qp: anzahlAus(k.qp),
+        bringtStatus: Boolean(k.bringtStatus),
+        eingeloest: Boolean(k.eingeloest),
+        ...syncFelder(k),
+      }),
+    ),
     regelwerkOverrides:
       d.regelwerkOverrides && typeof d.regelwerkOverrides === 'object'
         ? (d.regelwerkOverrides as Record<string, unknown>)
@@ -93,6 +131,12 @@ function syncFelder(e: Partial<SyncFelder>): SyncFelder {
     dirty: e.dirty === undefined ? true : Boolean(e.dirty),
     geloescht: Boolean(e.geloescht),
   }
+}
+
+/** Ganze, nicht negative Zahl — für Kartenzahlen und Punkte einer Kollektion. */
+function anzahlAus(wert: unknown): number {
+  const n = Math.round(Number(wert))
+  return Number.isFinite(n) ? Math.max(0, n) : 0
 }
 
 function nichtNegativ(wert: unknown): number | null {
@@ -144,7 +188,10 @@ export function istSicherung(roh: unknown): boolean {
 /** Ob überhaupt etwas drinsteht, das beim Überschreiben verloren ginge. */
 export function hatEintraege(daten: AppDaten): boolean {
   return (
-    daten.fluege.some((f) => !f.geloescht) || daten.boden.some((b) => !b.geloescht)
+    daten.fluege.some((f) => !f.geloescht) ||
+    daten.boden.some((b) => !b.geloescht) ||
+    daten.uptripKarten.some((k) => !k.geloescht) ||
+    daten.uptripKollektionen.some((k) => !k.geloescht)
   )
 }
 

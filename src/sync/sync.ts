@@ -1,6 +1,20 @@
 import { supabase } from '../supabase/client'
-import type { AppDaten, BodenEintrag, Flug, KlassenId, Strecke } from '../core/types'
-import { einstellungenAbbild, fuehreZusammen, einstellungenGeaendert } from './merge'
+import type {
+  AppDaten,
+  BodenEintrag,
+  Flug,
+  KlassenId,
+  Strecke,
+  UptripKarte,
+  UptripKollektion,
+} from '../core/types'
+import { alsKartenArt } from '../core/uptrip'
+import {
+  einstellungenAbbild,
+  fuehreZusammen,
+  einstellungenGeaendert,
+  type Abgleichbar,
+} from './merge'
 
 /* ---------- Übersetzung zwischen App-Form und Tabellenspalten ---------- */
 
@@ -95,6 +109,68 @@ export function zeileZuBoden(z: Zeile): BodenEintrag {
   }
 }
 
+export function karteZuZeile(k: UptripKarte, userId: string): Zeile {
+  return {
+    user_id: userId,
+    id: k.id,
+    name: k.name,
+    art: k.art,
+    original: k.original,
+    datum: k.datum,
+    flug: k.flug,
+    kollektion: k.kollektion,
+    geloescht: k.geloescht,
+  }
+}
+
+export function zeileZuKarte(z: Zeile): UptripKarte {
+  return {
+    id: String(z.id),
+    name: String(z.name ?? ''),
+    art: alsKartenArt(z.art),
+    original: Boolean(z.original),
+    datum: String(z.datum ?? ''),
+    flug: String(z.flug ?? ''),
+    kollektion: String(z.kollektion ?? ''),
+    geaendertAm: String(z.geaendert_am ?? ''),
+    dirty: false,
+    geloescht: Boolean(z.geloescht),
+  }
+}
+
+export function kollektionZuZeile(k: UptripKollektion, userId: string): Zeile {
+  return {
+    user_id: userId,
+    id: k.id,
+    name: k.name,
+    belohnung: k.belohnung,
+    benoetigt: k.benoetigt,
+    mindest_originale: k.mindestOriginale,
+    points: k.points,
+    qp: k.qp,
+    bringt_status: k.bringtStatus,
+    eingeloest: k.eingeloest,
+    geloescht: k.geloescht,
+  }
+}
+
+export function zeileZuKollektion(z: Zeile): UptripKollektion {
+  return {
+    id: String(z.id),
+    name: String(z.name ?? ''),
+    belohnung: String(z.belohnung ?? ''),
+    benoetigt: zahlOderNull0(z.benoetigt),
+    mindestOriginale: zahlOderNull0(z.mindest_originale),
+    points: zahlOderNull0(z.points),
+    qp: zahlOderNull0(z.qp),
+    bringtStatus: Boolean(z.bringt_status),
+    eingeloest: Boolean(z.eingeloest),
+    geaendertAm: String(z.geaendert_am ?? ''),
+    dirty: false,
+    geloescht: Boolean(z.geloescht),
+  }
+}
+
 /* ---------- Abgleich ---------- */
 
 export interface AbgleichErgebnis {
@@ -114,48 +190,60 @@ export class AbgleichFehler extends Error {}
  * überschreiben. Bei einem Konflikt gewinnt die lokal geänderte Fassung.
  */
 export async function abgleichen(daten: AppDaten, userId: string): Promise<AbgleichErgebnis> {
-  const [fernFluege, fernBoden] = await Promise.all([
-    hole('sf_fluege', userId),
-    hole('sf_boden', userId),
+  const [fluege, boden, karten, kollektionen] = await Promise.all([
+    gleicheTabelleAb('sf_fluege', daten.fluege, userId, zeileZuFlug, flugZuZeile),
+    gleicheTabelleAb('sf_boden', daten.boden, userId, zeileZuBoden, bodenZuZeile),
+    gleicheTabelleAb('sf_uptrip_karten', daten.uptripKarten, userId, zeileZuKarte, karteZuZeile),
+    gleicheTabelleAb(
+      'sf_uptrip_kollektionen',
+      daten.uptripKollektionen,
+      userId,
+      zeileZuKollektion,
+      kollektionZuZeile,
+    ),
   ])
-
-  const fluege = fuehreZusammen(daten.fluege, fernFluege.map(zeileZuFlug))
-  const boden = fuehreZusammen(daten.boden, fernBoden.map(zeileZuBoden))
-
-  const gesendeteFluege = await sende(
-    'sf_fluege',
-    fluege.zuSenden.map((f) => flugZuZeile(f, userId)),
-  )
-  const gesendetesBoden = await sende(
-    'sf_boden',
-    boden.zuSenden.map((b) => bodenZuZeile(b, userId)),
-  )
-
-  // Die Rückgabe enthält den Zeitstempel, den der Server gesetzt hat.
-  const stempel = (zeilen: Zeile[]) =>
-    new Map(zeilen.map((z) => [String(z.id), String(z.geaendert_am ?? '')]))
-  const flugStempel = stempel(gesendeteFluege)
-  const bodenStempel = stempel(gesendetesBoden)
-
-  const uebernommen = <T extends { id: string; dirty: boolean; geaendertAm: string }>(
-    liste: T[],
-    karte: Map<string, string>,
-  ): T[] =>
-    liste.map((e) =>
-      karte.has(e.id) ? { ...e, dirty: false, geaendertAm: karte.get(e.id)! } : e,
-    )
-
   const einstellungen = await gleicheEinstellungenAb(daten, userId)
+  const teile = [fluege, boden, karten, kollektionen]
 
   return {
     daten: {
       ...daten,
       ...einstellungen,
-      fluege: uebernommen(fluege.lokal, flugStempel),
-      boden: uebernommen(boden.lokal, bodenStempel),
+      fluege: fluege.liste,
+      boden: boden.liste,
+      uptripKarten: karten.liste,
+      uptripKollektionen: kollektionen.liste,
     },
-    hochgeladen: gesendeteFluege.length + gesendetesBoden.length,
-    heruntergeladen: fernFluege.length + fernBoden.length,
+    hochgeladen: teile.reduce((s, t) => s + t.hochgeladen, 0),
+    heruntergeladen: teile.reduce((s, t) => s + t.heruntergeladen, 0),
+  }
+}
+
+/**
+ * Eine Tabelle abgleichen: holen, zusammenführen, das Offene hochladen. Erst
+ * mit dem Zeitstempel aus der Antwort des Servers gilt ein Eintrag als
+ * abgeglichen — den setzt der Server, nicht das Gerät.
+ */
+async function gleicheTabelleAb<T extends Abgleichbar>(
+  tabelle: string,
+  lokal: T[],
+  userId: string,
+  ausZeile: (z: Zeile) => T,
+  zuZeile: (e: T, userId: string) => Zeile,
+): Promise<{ liste: T[]; hochgeladen: number; heruntergeladen: number }> {
+  const fern = await hole(tabelle, userId)
+  const zusammen = fuehreZusammen(lokal, fern.map(ausZeile))
+  const gesendet = await sende(
+    tabelle,
+    zusammen.zuSenden.map((e) => zuZeile(e, userId)),
+  )
+  const stempel = new Map(gesendet.map((z) => [String(z.id), String(z.geaendert_am ?? '')]))
+  return {
+    liste: zusammen.lokal.map((e) =>
+      stempel.has(e.id) ? { ...e, dirty: false, geaendertAm: stempel.get(e.id)! } : e,
+    ),
+    hochgeladen: gesendet.length,
+    heruntergeladen: fern.length,
   }
 }
 

@@ -252,6 +252,16 @@
       "hinweis": "Für alles, was hier nicht abgebildet ist – etwa AirRail-Zugsegmente oder Aktionsgutschriften. Punkte direkt eintragen."
     }
   ],
+  "uptrip": {
+    "kartenJeSegment": 2,
+    "statusKollektion": {
+      "name": "Frequent Traveller",
+      "belohnung": "FTL-Status",
+      "benoetigt": 50,
+      "mindestOriginale": 40
+    },
+    "hinweis": "Stand 09/2026: Pro Flugsegment gibt es zwei Originalkarten, wählbar aus Start, Ziel, Airline und Flugzeug. Die Frequent-Traveller-Kollektion verlangt 50 Karten, davon 40 Originale; begrenzt auf 10.000 Einlösungen, einmal pro Person, kann jederzeit enden. Quelle: meilenoptimieren.com/miles-and-more-frequent-traveller-status-uptrip/"
+  },
   "termine": [
     {
       "id": "kk-willkommen-ende",
