@@ -372,6 +372,18 @@ real ein: geplant war 2027, näher dran war längst 2026.
 
 Vergangene Jahre bleiben dabei außen vor — dort lässt sich nichts mehr erreichen.
 
+## Extra Benefits
+
+Über dem Status gibt es automatisch weitere Vorteile — gezählt in **Qualifying
+Points** pro Kalenderjahr, nicht in Points: Frequent Traveller ab 700 QP einen
+Upgrade-eVoucher, ab 800 QP einen Meilentausch für den Senator. Die Stufen stehen
+je Ziel im Regelwerk (`extraBenefits`), gerechnet wird in `extraBenefits()`.
+
+Am 11.09.2026 auf der offiziellen Seite geprüft (dort „Stand Oktober 2023“). Die
+Seite blockt automatische Abrufe mit 403 — geprüft wurde im Browser. Eine erste
+Antwort aus dem Gedächtnis („über 650 bringt nichts“) war falsch; der Nutzer
+hatte es besser gewusst. Bei Programmregeln nie aus dem Kopf antworten.
+
 ## „Reicht insgesamt" ist die halbe Wahrheit
 
 `unverzichtbareQuellen()` nennt die Boden-Quellen, ohne die die Lücke

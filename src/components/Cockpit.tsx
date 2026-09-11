@@ -9,6 +9,7 @@ import {
   berechneVerlauf,
   bodenRestKapazitaet,
   erreichtAm,
+  extraBenefits,
   flugVorschlaege,
   unverzichtbareQuellen,
 } from '../core/calc'
@@ -45,6 +46,7 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden, a
   )
   const erreichtPlan = erreichtAm(verlauf)
   const tempo = berechneTempo(ist, daten.zieljahr)
+  const benefits = extraBenefits(ziel, ist.gesamt.qp, plan.gesamt.qp)
 
   // Was bleibt, wenn alle noch offenen Boden-Quellen ausgeschöpft werden?
   const rest = bodenRestKapazitaet(plan)
@@ -235,6 +237,50 @@ export default function Cockpit({ regelwerk, daten, ziel, aufFluege, aufBoden, a
             {zahl(tempo.hochrechnungPoints)} Points und {zahl(tempo.hochrechnungQp)}{' '}
             Qualifying Points — geplante Einträge nicht mitgerechnet.
           </p>
+        )}
+
+        {benefits.length > 0 && (
+          <>
+            <p className="abschnitt-titel" style={{ marginTop: 'var(--s5)' }}>
+              Extra Benefits {daten.zieljahr}
+            </p>
+            <p className="unter">
+              Gibt es automatisch ab einer Zahl Qualifying Points im Kalenderjahr — obendrauf
+              auf den Status.
+            </p>
+            <div className="liste">
+              {benefits.map((b) => (
+                <div
+                  className={`zeile ${b.geplant ? 'ist-geplant' : ''}`}
+                  key={b.benefit.qualifyingPoints}
+                >
+                  <div className="zeile-haupt">
+                    <div className="zeile-titel">
+                      {b.benefit.titel}
+                      {b.erreicht && <span className="marke-geplant">erreicht</span>}
+                      {b.geplant && <span className="marke-geplant">mit Planung</span>}
+                    </div>
+                    <div className="zeile-neben">
+                      ab {zahl(b.benefit.qualifyingPoints)} Qualifying Points · {b.benefit.hinweis}
+                    </div>
+                  </div>
+                  <div className="punkte-block">
+                    {b.fehlt > 0 ? (
+                      <>
+                        <b>{zahl(b.fehlt)}</b>
+                        <span className="keine-qp">QP fehlen</span>
+                      </>
+                    ) : (
+                      <>
+                        <b>✓</b>
+                        <span className="keine-qp">{b.erreicht ? 'erreicht' : 'geplant'}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </section>
 

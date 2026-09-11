@@ -1,12 +1,20 @@
 import roh from './regelwerk.json'
 import type { KlassenId, Strecke } from '../core/types'
 
+/** Zusätzlicher Vorteil, den es ab einer Zahl Qualifying Points im Jahr automatisch gibt. */
+export interface ExtraBenefit {
+  qualifyingPoints: number
+  titel: string
+  hinweis: string
+}
+
 export interface Ziel {
   id: string
   name: string
   kuerzel: string
   points: number
   qualifyingPoints: number
+  extraBenefits?: ExtraBenefit[]
 }
 
 export interface Klasse {

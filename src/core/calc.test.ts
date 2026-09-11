@@ -11,6 +11,7 @@ import {
   flugVorschlaege,
   unverzichtbareQuellen,
   maxEinheiten,
+  extraBenefits,
   punkteFuerBodenEintrag,
   punkteFuerFlug,
 } from './calc'
@@ -634,5 +635,53 @@ describe('Boden-Einträge mit echter Gutschrift', () => {
     const verlauf = berechneVerlauf(R, d, FTL, 'plan')
     expect(verlauf[verlauf.length - 1]!.points).toBe(berechneBilanz(R, d, 'plan').gesamt.points)
     expect(verlauf.map((v) => v.points)).toEqual([20, 60])
+  })
+})
+
+describe('Extra Benefits', () => {
+  const mitBenefits = {
+    ...FTL,
+    extraBenefits: [
+      { qualifyingPoints: 800, titel: 'Meilentausch', hinweis: '' },
+      { qualifyingPoints: 700, titel: 'Upgrade-eVoucher', hinweis: '' },
+    ],
+  }
+
+  it('sortiert die Stufen aufsteigend', () => {
+    expect(extraBenefits(mitBenefits, 0, 0).map((b) => b.benefit.qualifyingPoints)).toEqual([700, 800])
+  })
+
+  it('zählt genau 700 Qualifying Points als erreicht', () => {
+    const [voucher] = extraBenefits(mitBenefits, 700, 700)
+    expect(voucher).toMatchObject({ erreicht: true, geplant: false, fehlt: 0 })
+  })
+
+  it('zählt 699 nicht und nennt den einen fehlenden Punkt', () => {
+    const [voucher] = extraBenefits(mitBenefits, 699, 699)
+    expect(voucher).toMatchObject({ erreicht: false, geplant: false, fehlt: 1 })
+  })
+
+  it('unterscheidet erreicht von erst mit Planung erreicht', () => {
+    const [voucher, tausch] = extraBenefits(mitBenefits, 480, 720)
+    expect(voucher).toMatchObject({ erreicht: false, geplant: true, fehlt: 0 })
+    expect(tausch).toMatchObject({ erreicht: false, geplant: false, fehlt: 80 })
+  })
+
+  it('rechnet den Rest ab dem höheren Stand, falls Geplantes wegfällt', () => {
+    expect(extraBenefits(mitBenefits, 690, 600)[0]!.fehlt).toBe(10)
+  })
+
+  it('liefert nichts für ein Ziel ohne Extra Benefits', () => {
+    expect(extraBenefits({ ...FTL, extraBenefits: [] }, 900, 900)).toEqual([])
+    const ohneFeld = { id: 'x', name: 'X', kuerzel: 'X', points: 1, qualifyingPoints: 1 }
+    expect(extraBenefits(ohneFeld, 900, 900)).toEqual([])
+  })
+
+  it('kennt die offiziellen Schwellen aus dem Regelwerk', () => {
+    const ftl = R.ziele.find((z) => z.id === 'frequent-traveller')!
+    expect(extraBenefits(ftl, 480, 480).map((b) => [b.benefit.qualifyingPoints, b.fehlt])).toEqual([
+      [700, 220],
+      [800, 320],
+    ])
   })
 })

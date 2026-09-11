@@ -1,5 +1,5 @@
 import type { AppDaten, BodenEintrag, Flug, KlassenId, Punkte, Strecke } from './types'
-import type { BodenQuelle, Regelwerk, Ziel } from '../rules'
+import type { BodenQuelle, ExtraBenefit, Regelwerk, Ziel } from '../rules'
 import { istQualifyingAirline } from '../rules'
 
 export type Modus = 'ist' | 'plan'
@@ -368,4 +368,33 @@ export function berechneTempo(
 export function anteil(wert: number, ziel: number): number {
   if (ziel <= 0) return 100
   return Math.min(100, Math.max(0, (wert / ziel) * 100))
+}
+
+/* ---------- Extra Benefits ---------- */
+
+export interface ExtraBenefitStand {
+  benefit: ExtraBenefit
+  /** Mit dem Ist-Stand schon erreicht */
+  erreicht: boolean
+  /** Erst mit den geplanten Einträgen erreicht */
+  geplant: boolean
+  /** Qualifying Points, die auch mit allem Geplanten noch fehlen */
+  fehlt: number
+}
+
+/**
+ * Welche Extra Benefits des Ziels erreicht sind. Die gibt es automatisch ab
+ * einer Zahl Qualifying Points im Kalenderjahr — Points spielen dabei keine
+ * Rolle. Den Status muss man nicht eigens prüfen: Jeder Qualifying Point ist
+ * auch ein Point, wer die Schwelle schafft, hat den Status also schon.
+ */
+export function extraBenefits(ziel: Ziel, qpIst: number, qpPlan: number): ExtraBenefitStand[] {
+  return [...(ziel.extraBenefits ?? [])]
+    .sort((a, b) => a.qualifyingPoints - b.qualifyingPoints)
+    .map((benefit) => ({
+      benefit,
+      erreicht: qpIst >= benefit.qualifyingPoints,
+      geplant: qpIst < benefit.qualifyingPoints && qpPlan >= benefit.qualifyingPoints,
+      fehlt: Math.max(0, benefit.qualifyingPoints - Math.max(qpIst, qpPlan)),
+    }))
 }

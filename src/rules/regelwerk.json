@@ -4,6 +4,10 @@
   "hinweis": "Miles & More ändert die Bedingungen regelmäßig. Alle Werte hier sind in der App unter „Regelwerk“ überschreibbar, ohne dass Code geändert werden muss.",
   "quellen": [
     {
+      "titel": "Miles & More: Extra Benefits für Statuskund:innen (Stand Oktober 2023, geprüft am 11.09.2026)",
+      "url": "https://www.miles-and-more.com/de/de/program/status-benefits/extra-benefits.html"
+    },
+    {
       "titel": "Miles & More Statusprogramm (meilenoptimieren)",
       "url": "https://meilenoptimieren.com/miles-and-more-statusprogramm/"
     },
@@ -34,14 +38,53 @@
       "name": "Frequent Traveller",
       "kuerzel": "FTL",
       "points": 650,
-      "qualifyingPoints": 325
+      "qualifyingPoints": 325,
+      "extraBenefits": [
+        {
+          "qualifyingPoints": 700,
+          "titel": "Upgrade-eVoucher",
+          "hinweis": "Ein eVoucher für ein Upgrade in eine höhere Reiseklasse."
+        },
+        {
+          "qualifyingPoints": 800,
+          "titel": "Meilentausch für den Senator",
+          "hinweis": "Bis zu 20.000 Meilen gegen bis zu 125 Points und 125 Qualifying Points tauschen."
+        }
+      ]
     },
     {
       "id": "senator",
       "name": "Senator",
       "kuerzel": "SEN",
       "points": 2000,
-      "qualifyingPoints": 1000
+      "qualifyingPoints": 1000,
+      "extraBenefits": [
+        {
+          "qualifyingPoints": 2200,
+          "titel": "50-Euro-Gutschein für den Worldshop",
+          "hinweis": "Für eine Prämie im Miles & More Worldshop."
+        },
+        {
+          "qualifyingPoints": 2500,
+          "titel": "Zwei Upgrade-eVoucher",
+          "hinweis": "Zwei eVoucher für Upgrades in eine höhere Reiseklasse."
+        },
+        {
+          "qualifyingPoints": 3500,
+          "titel": "Frequent Traveller Partnerkarte",
+          "hinweis": "Schenkt einer anderen Person den Frequent Traveller Status."
+        },
+        {
+          "qualifyingPoints": 4500,
+          "titel": "15.000 Meilen",
+          "hinweis": "Eine Meilengutschrift."
+        },
+        {
+          "qualifyingPoints": 5500,
+          "titel": "First Class Lounge Voucher",
+          "hinweis": "Zugang zu einer First Class Lounge in Frankfurt oder München, zur HON Circle Lounge in Wien oder zur First Lounge in Zürich."
+        }
+      ]
     }
   ],
   "klassen": [
