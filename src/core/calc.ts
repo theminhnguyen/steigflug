@@ -1,4 +1,4 @@
-import type { AppDaten, Flug, KlassenId, Punkte, Strecke } from './types'
+import type { AppDaten, BodenEintrag, Flug, KlassenId, Punkte, Strecke } from './types'
 import type { BodenQuelle, Regelwerk, Ziel } from '../rules'
 import { istQualifyingAirline } from '../rules'
 
@@ -24,6 +24,29 @@ export function punkteFuerEinheiten(q: BodenQuelle, einheiten: number, freieQp =
   return {
     points: einheiten * (q.pointsProEinheit ?? 0),
     qp: einheiten * (q.qpProEinheit ?? 0),
+  }
+}
+
+/**
+ * Punkte eines Boden-Eintrags für die Einheiten, die das Jahreslimit zulässt.
+ *
+ * Steht eine tatsächliche Gutschrift dabei — etwa aus dem Kontoauszug —, gilt
+ * sie statt der Regelwerkswerte. Das Jahreslimit zählt trotzdem in Einheiten:
+ * Eine Moxy-Nacht bleibt einer von drei Aufenthalten, auch wenn sie nur 20
+ * statt 40 Points gebracht hat. Übersteigt ein Eintrag das Limit teilweise,
+ * wird die echte Gutschrift anteilig mitgedeckelt.
+ */
+export function punkteFuerBodenEintrag(
+  q: BodenQuelle,
+  e: Pick<BodenEintrag, 'anzahl' | 'freieQp' | 'korrekturPoints' | 'korrekturQp'>,
+  nutzbar: number,
+): Punkte {
+  const anteil = e.anzahl > 0 ? nutzbar / e.anzahl : 0
+  const berechnet = punkteFuerEinheiten(q, nutzbar, e.freieQp * anteil)
+  const echt = (w: number | null) => (w !== null && Number.isFinite(w) ? w * anteil : null)
+  return {
+    points: echt(e.korrekturPoints) ?? berechnet.points,
+    qp: echt(e.korrekturQp) ?? berechnet.qp,
   }
 }
 
@@ -111,9 +134,7 @@ export function berechneBilanz(r: Regelwerk, daten: AppDaten, modus: Modus): Bil
       if (frei <= 0) continue
       const nutzbar = Math.min(e.anzahl, frei)
       gezaehlt += nutzbar
-      // Bei freier Eingabe wird der QP-Anteil anteilig mitgedeckelt.
-      const anteil = e.anzahl > 0 ? nutzbar / e.anzahl : 0
-      punkte = addiere(punkte, punkteFuerEinheiten(q, nutzbar, e.freieQp * anteil))
+      punkte = addiere(punkte, punkteFuerBodenEintrag(q, e, nutzbar))
     }
 
     boden = addiere(boden, punkte)
@@ -195,8 +216,7 @@ export function berechneVerlauf(
         const bisher = verbraucht.get(q.id) ?? 0
         const nutzbar = Math.max(0, Math.min(b.anzahl, grenze - bisher))
         verbraucht.set(q.id, bisher + nutzbar)
-        const anteil = b.anzahl > 0 ? nutzbar / b.anzahl : 0
-        return punkteFuerEinheiten(q, nutzbar, b.freieQp * anteil)
+        return punkteFuerBodenEintrag(q, b, nutzbar)
       },
     })
   }

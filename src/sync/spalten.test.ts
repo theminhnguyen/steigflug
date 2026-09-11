@@ -14,7 +14,7 @@ const SPALTEN_FLUEGE = [
 ]
 const SPALTEN_BODEN = [
   'user_id', 'id', 'datum', 'quelle', 'anzahl', 'freie_qp', 'geplant', 'notiz',
-  'geloescht', 'geaendert_am',
+  'geloescht', 'geaendert_am', 'korrektur_points', 'korrektur_qp', 'herkunft',
 ]
 
 const FLUG: Flug = {
@@ -26,7 +26,8 @@ const FLUG: Flug = {
 
 const BODEN: BodenEintrag = {
   id: 'b1', datum: '2027-03-01', quelle: 'marriott', anzahl: 2, freieQp: 3,
-  geplant: false, notiz: 'Moxy', geaendertAm: '2027-01-01T10:00:00Z',
+  geplant: false, notiz: 'Moxy', korrekturPoints: 20, korrekturQp: null,
+  herkunft: 'kontoauszug|probe', geaendertAm: '2027-01-01T10:00:00Z',
   dirty: true, geloescht: true,
 }
 

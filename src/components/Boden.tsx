@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import type { AppDaten, BodenEintrag, SetDaten } from '../core/types'
 import type { Regelwerk } from '../rules'
 import { findeBodenQuelle } from '../rules'
-import { berechneBilanz, jahrVon, maxEinheiten, punkteFuerEinheiten } from '../core/calc'
+import { berechneBilanz, jahrVon, maxEinheiten, punkteFuerBodenEintrag } from '../core/calc'
 import { datumKurz, heuteIso, menge, zahl, zahlAusFeld } from '../core/format'
 import { neueId } from '../store/store'
 import { alsGeloescht, ohneGeloeschte } from '../sync/merge'
@@ -24,6 +24,9 @@ function leererEintrag(jahr: number, quelle: string): BodenEintrag {
     freieQp: 0,
     geplant: jahr > new Date().getFullYear(),
     notiz: '',
+    korrekturPoints: null,
+    korrekturQp: null,
+    herkunft: '',
     geaendertAm: '',
     dirty: true,
     geloescht: false,
@@ -36,6 +39,7 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
     leererEintrag(daten.zieljahr, ersteQuelle),
   )
   const [bearbeitet, setBearbeitet] = useState<string | null>(null)
+  const [zeigeKorrektur, setZeigeKorrektur] = useState(false)
 
   const quelle = findeBodenQuelle(regelwerk, entwurf.quelle) ?? regelwerk.bodenQuellen[0]!
   const bilanz = useMemo(() => berechneBilanz(regelwerk, daten, 'plan'), [regelwerk, daten])
@@ -47,7 +51,8 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
     return { imJahr: sortiereFuerAnzeige(jahr), andereJahre: sichtbar.length - jahr.length }
   }, [daten.boden, daten.zieljahr])
 
-  const vorschau = punkteFuerEinheiten(quelle, entwurf.anzahl, entwurf.freieQp)
+  const vorschau = punkteFuerBodenEintrag(quelle, entwurf, entwurf.anzahl)
+  const mitGutschrift = entwurf.korrekturPoints !== null || entwurf.korrekturQp !== null
   // Der Grund fürs Sperren wird mitgeführt, damit er neben dem Knopf stehen kann:
   // ein stummer, ausgegrauter Knopf wird als kaputtes Feature wahrgenommen.
   const fehlt = !entwurf.datum
@@ -60,6 +65,7 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
   function zuruecksetzen() {
     setEntwurf(leererEintrag(daten.zieljahr, entwurf.quelle))
     setBearbeitet(null)
+    setZeigeKorrektur(false)
   }
 
   function speichern() {
@@ -79,6 +85,7 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
   function bearbeiten(b: BodenEintrag) {
     setEntwurf({ ...b })
     setBearbeitet(b.id)
+    setZeigeKorrektur(b.korrekturPoints !== null || b.korrekturQp !== null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -210,6 +217,54 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
             Nur geplant — zählt in der Prognose, nicht im Ist-Stand
           </label>
 
+          {zeigeKorrektur ? (
+            <div className="feld-reihe">
+              <div className="feld">
+                <label htmlFor="b-kp">Tatsächlich gutgeschrieben: Points</label>
+                <input
+                  id="b-kp"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  placeholder={String(punkteFuerBodenEintrag(quelle, { ...entwurf, korrekturPoints: null, korrekturQp: null }, entwurf.anzahl).points)}
+                  value={entwurf.korrekturPoints ?? ''}
+                  onChange={(e) =>
+                    setEntwurf({
+                      ...entwurf,
+                      korrekturPoints: e.target.value === '' ? null : zahlAusFeld(e.target.value),
+                    })
+                  }
+                />
+              </div>
+              <div className="feld">
+                <label htmlFor="b-kqp">Tatsächlich gutgeschrieben: QP</label>
+                <input
+                  id="b-kqp"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={entwurf.korrekturQp ?? ''}
+                  onChange={(e) =>
+                    setEntwurf({
+                      ...entwurf,
+                      korrekturQp: e.target.value === '' ? null : zahlAusFeld(e.target.value),
+                    })
+                  }
+                />
+                <span className="hinweis">Leer lassen = Regelwerk verwenden.</span>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="knopf leise klein"
+              style={{ justifySelf: 'start' }}
+              onClick={() => setZeigeKorrektur(true)}
+            >
+              Abweichende Gutschrift eintragen
+            </button>
+          )}
+
           <div className="feld">
             <label htmlFor="b-notiz">Notiz</label>
             <input
@@ -236,7 +291,9 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
             <p>
               {stand?.limitErreicht
                 ? 'Achtung: Das Jahreslimit ist bereits erreicht — dieser Eintrag zählt nicht mehr mit.'
-                : 'Vorschau vor Anrechnung des Jahreslimits.'}
+                : mitGutschrift
+                  ? 'Tatsächliche Gutschrift, vor Anrechnung des Jahreslimits.'
+                  : 'Vorschau vor Anrechnung des Jahreslimits.'}
             </p>
           </div>
 
@@ -309,13 +366,14 @@ export default function Boden({ regelwerk, daten, setDaten }: Props) {
           <div className="liste">
             {imJahr.map((b) => {
               const q = findeBodenQuelle(regelwerk, b.quelle)
-              const p = q ? punkteFuerEinheiten(q, b.anzahl, b.freieQp) : { points: 0, qp: 0 }
+              const p = q ? punkteFuerBodenEintrag(q, b, b.anzahl) : { points: 0, qp: 0 }
               return (
                 <div className={`zeile ${b.geplant ? 'ist-geplant' : ''}`} key={b.id}>
                   <div className="zeile-haupt">
                     <div className="zeile-titel">
                       {q?.name ?? b.quelle}
                       {b.geplant && <span className="marke-geplant">geplant</span>}
+                      {b.herkunft && <span className="marke-geplant">Kontoauszug</span>}
                     </div>
                     <div className="zeile-neben">
                       {datumKurz(b.datum)} ·{' '}

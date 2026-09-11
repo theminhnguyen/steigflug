@@ -195,6 +195,7 @@ export default function App() {
         )}
         {reiter === 'daten' && (
           <Daten
+            regelwerk={regelwerk}
             daten={daten}
             setDaten={setDaten}
             konto={konto}

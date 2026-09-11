@@ -30,6 +30,13 @@ export interface BodenQuelle {
   qpProEinheit?: number
   /** null = kein bekanntes Jahreslimit */
   maxPointsProJahr: number | null
+  /**
+   * Eine Buchung kann mehrere Einheiten bündeln — etwa drei 5.000er-Pakete
+   * Meilentausch in einer Gutschrift. Dann wird die Anzahl aus den Punkten
+   * errechnet. Sonst gilt: eine Buchung, eine Einheit (ein Aufenthalt, eine
+   * Kollektion), egal wie hoch die Gutschrift ausfiel.
+   */
+  einheitenAusPunkten?: boolean
   hinweis: string
 }
 

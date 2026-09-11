@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { AppDaten, SetDaten } from '../core/types'
+import type { Regelwerk } from '../rules'
 import {
   alsJson,
   dateiname,
@@ -16,13 +17,14 @@ import KontoBereich from './Konto'
 import MmImport from './MmImport'
 
 interface Props {
+  regelwerk: Regelwerk
   daten: AppDaten
   setDaten: SetDaten
   konto: Konto
   qualifyingCodes: string[]
 }
 
-export default function Daten({ daten, setDaten, konto, qualifyingCodes }: Props) {
+export default function Daten({ regelwerk, daten, setDaten, konto, qualifyingCodes }: Props) {
   const dateiFeld = useRef<HTMLInputElement>(null)
   const [meldung, setMeldung] = useState<{ art: 'gut' | 'fehler'; text: string } | null>(null)
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
@@ -84,7 +86,12 @@ export default function Daten({ daten, setDaten, konto, qualifyingCodes }: Props
     <>
       <KontoBereich konto={konto} />
 
-      <MmImport daten={daten} setDaten={setDaten} qualifyingCodes={qualifyingCodes} />
+      <MmImport
+        regelwerk={regelwerk}
+        daten={daten}
+        setDaten={setDaten}
+        qualifyingCodes={qualifyingCodes}
+      />
 
       <section className="karte">
         <h2>Sicherung</h2>

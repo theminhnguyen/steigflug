@@ -39,6 +39,11 @@ Beide Wege müssen dasselbe Endergebnis liefern; dafür gibt es Tests.
 schnelle Klicks beide von derselben veralteten Kopie ausgehen — beim Löschen zweier
 Zeilen käme die erste zurück. Der Typ lässt die kurze Form gar nicht erst zu.
 
+**Nichts aus der Funktion nach draußen tragen.** React führt die übergebene
+Funktion nicht zwingend sofort aus. Eine Zählvariable, die darin gesetzt und
+danach für eine Meldung gelesen wird, kann noch auf null stehen — so stand es
+im Flugimport. Meldungen nehmen ihre Zahlen aus der Vorschau.
+
 Beim Anlegen zusätzlich über die ID absichern (`d.fluege.some(f => f.id === neu.id)`).
 `disabled` allein verhindert keinen Doppelklick: Zwei Tipps landen im selben
 React-Durchlauf, bevor der Zustand steht.
@@ -220,6 +225,54 @@ der Deutung „Qualifying Points“ vereinbar, beweist sie aber nicht — sämtl
 Airlines in den Daten sind vollintegriert, dort sind beide Werte ohnehin gleich.
 Ein Gegenbeweis bräuchte einen Flug mit einer nur teilintegrierten Airline
 (Star-Alliance-Partner). Bis dahin bleibt der Schalter in der Vorschau.
+
+## Kontoauszug: Uptrip, Marriott, Kreditkarte
+
+`src/import/kontoauszug.ts` liest
+`api.miles-and-more.com/ui-services/v1/me/statement-ui-printer/table?renderVersion=v2`.
+Die Antwort ist **Server-Driven UI** — eine Bauanleitung für die Tabelle der
+Kontoseite, keine Datenliste. Der Leser hält sich an die sprechenden Kennungen
+(`transactionRecord_N_row`, `…_Date`, `…_N_Items`, `…_CurrencyAmountRow`),
+nicht an Positionen im Baum: Ein umgebautes Layout soll ihn nicht sofort brechen.
+
+- **Beschriftungen exakt vergleichen, nie als Teilstück.** „Points“ steckt auch
+  in „Qualifying Points“ und „HON Circle Points“.
+- **Aktionszeilen** (`…_PromotionAmountRow`, „Klimabeitrag geleistet“) zählen nicht.
+- **Umlaute** kommen als „Ã¼“, wenn der Browser die Antwort als Windows-1252
+  anzeigt und man sie so kopiert. `repariereUmlaute` braucht die
+  Rückwärtstabelle für 0x80–0x9F — sonst bleibt ausgerechnet das Ü kaputt,
+  denn in „Ãœ“ steckt U+0153, ein Zeichen jenseits von Latin-1.
+- **Nur Gutschriften ohne Flug.** Flüge kommen über die Flugliste; beide zu
+  übernehmen zählte doppelt. Flugzeilen erkennt `FLUGZEILE` an Flugnummer plus
+  Reiseklasse.
+- **Der Schlüssel (`herkunft`) entsteht aus dem Inhalt.** Die Zeilenkennungen
+  sind nur Positionen und wandern mit jeder neuen Buchung. Gleiche Buchungen am
+  selben Tag werden durchgezählt.
+- **Die Kennung (`id`) folgt aus dem Schlüssel**, nicht aus dem Zufall. Liest man
+  denselben Auszug auf zwei Geräten vor dem Abgleich ein, entsteht so derselbe
+  Eintrag, und der Abgleich legt beide zusammen.
+- **Gelöschte Übernahmen kommen nicht wieder.** Wer eine Gutschrift entfernt, will
+  sie beim nächsten Einlesen nicht zurückbekommen.
+- **Planung wird bestätigt, nicht verdoppelt.** Eine Gutschrift übernimmt den
+  nächstgelegenen geplanten Handeintrag derselben Quelle im selben Jahr
+  (höchstens 45 Tage Abstand) — Datum und Notiz bleiben.
+
+Die echte Gutschrift steht in `korrekturPoints` / `korrekturQp`, und
+`punkteFuerBodenEintrag` bevorzugt sie. **Das Jahreslimit zählt trotzdem in
+Einheiten**, nicht in Punkten: Vier Moxy-Nächte à 20 passten sonst unter das
+120er-Limit, obwohl nur drei Aufenthalte zählen.
+
+**Nur die neuesten 9 Buchungen.** Die Adresse liefert eine Seite
+(`pagination.limit`). „Mehr anzeigen“ schickt auf der Kontoseite einen POST an
+`…/statement-ui-printer` mit `{filters: []}`; wie dabei der Versatz übergeben
+wird, steht nicht in der Antwort und ist ungeprüft — nicht raten. Die Vorschau
+sagt offen, wie viele fehlen.
+
+**Die Zuordnung ist ein Vorschlag.** Beim Bau lagen keine echten Uptrip-,
+Marriott- oder Kreditkarten-Zeilen vor. `schlageQuelleVor` rät aus Partner und
+Text, die Vorschau lässt jede Zeile umstellen. Sobald echte Zeilen vorliegen:
+Muster und Tests daran prüfen — und die Frage klären, ob Moxy 20 oder 40 Points
+bringt.
 
 ## Rechenlast in Komponenten
 

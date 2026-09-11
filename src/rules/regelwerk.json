@@ -209,7 +209,8 @@
       "pointsProEinheit": 20,
       "qpProEinheit": 20,
       "maxPointsProJahr": 100,
-      "hinweis": "250 Prämienmeilen ergeben 1 Point + 1 Qualifying Point, Umtausch in 5.000er-Schritten. Maximal 25.000 Meilen pro Kalenderjahr = 100 Points + 100 QP. Setzt eine Miles & More Kreditkarte voraus."
+      "hinweis": "250 Prämienmeilen ergeben 1 Point + 1 Qualifying Point, Umtausch in 5.000er-Schritten. Maximal 25.000 Meilen pro Kalenderjahr = 100 Points + 100 QP. Setzt eine Miles & More Kreditkarte voraus.",
+      "einheitenAusPunkten": true
     },
     {
       "id": "uptrip",
@@ -229,7 +230,8 @@
       "pointsProEinheit": 50,
       "qpProEinheit": 50,
       "maxPointsProJahr": null,
-      "hinweis": "50 Points + 50 Qualifying Points je eVoucher, kein Jahreslimit bekannt. Setzt voraus, dass du überhaupt eVoucher besitzt."
+      "hinweis": "50 Points + 50 Qualifying Points je eVoucher, kein Jahreslimit bekannt. Setzt voraus, dass du überhaupt eVoucher besitzt.",
+      "einheitenAusPunkten": true
     },
     {
       "id": "co2",

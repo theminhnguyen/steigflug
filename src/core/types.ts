@@ -51,6 +51,15 @@ export interface BodenEintrag extends SyncFelder {
   freieQp: number
   geplant: boolean
   notiz: string
+  /** Tatsächlich gutgeschriebene Werte, falls sie vom Regelwerk abweichen */
+  korrekturPoints: number | null
+  korrekturQp: number | null
+  /**
+   * Woher der Eintrag stammt. Leer bei Handeinträgen; bei Übernahmen aus dem
+   * Kontoauszug ein inhaltlicher Schlüssel, an dem ein zweiter Import erkennt,
+   * was schon da ist.
+   */
+  herkunft: string
 }
 
 export interface AppDaten {

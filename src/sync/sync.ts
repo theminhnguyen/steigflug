@@ -70,6 +70,9 @@ export function bodenZuZeile(b: BodenEintrag, userId: string): Zeile {
     freie_qp: b.freieQp,
     geplant: b.geplant,
     notiz: b.notiz,
+    korrektur_points: b.korrekturPoints,
+    korrektur_qp: b.korrekturQp,
+    herkunft: b.herkunft,
     geloescht: b.geloescht,
   }
 }
@@ -83,6 +86,9 @@ export function zeileZuBoden(z: Zeile): BodenEintrag {
     freieQp: zahlOderNull0(z.freie_qp),
     geplant: Boolean(z.geplant),
     notiz: String(z.notiz ?? ''),
+    korrekturPoints: zahlOderNull(z.korrektur_points),
+    korrekturQp: zahlOderNull(z.korrektur_qp),
+    herkunft: String(z.herkunft ?? ''),
     geaendertAm: String(z.geaendert_am ?? ''),
     dirty: false,
     geloescht: Boolean(z.geloescht),

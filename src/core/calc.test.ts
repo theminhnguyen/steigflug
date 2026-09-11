@@ -11,6 +11,7 @@ import {
   flugVorschlaege,
   unverzichtbareQuellen,
   maxEinheiten,
+  punkteFuerBodenEintrag,
   punkteFuerFlug,
 } from './calc'
 import type { AppDaten, BodenEintrag, Flug, KlassenId, Strecke } from './types'
@@ -52,6 +53,9 @@ function boden(over: Partial<BodenEintrag> = {}): BodenEintrag {
     freieQp: 0,
     geplant: false,
     notiz: '',
+    korrekturPoints: null,
+    korrekturQp: null,
+    herkunft: '',
     geaendertAm: '',
     dirty: false,
     geloescht: false,
@@ -580,5 +584,53 @@ describe('unverzichtbareQuellen', () => {
   it('nennt bei genau aufgehender Rechnung alle Quellen', () => {
     const rest = [q('a', 100), q('b', 150)]
     expect(unverzichtbareQuellen(rest, { points: 250, qp: 0, erreicht: false })).toHaveLength(2)
+  })
+})
+
+
+describe('Boden-Einträge mit echter Gutschrift', () => {
+  const marriott = R.bodenQuellen.find((q) => q.id === 'marriott')!
+
+  it('rechnet mit der echten Gutschrift statt dem Regelwert', () => {
+    const d = daten({ boden: [boden({ korrekturPoints: 20 })] })
+    expect(berechneBilanz(R, d, 'plan').gesamt).toEqual({ points: 20, qp: 0 })
+  })
+
+  it('verbraucht trotzdem einen der drei Aufenthalte', () => {
+    const d = daten({ boden: [boden({ korrekturPoints: 20 })] })
+    const m = berechneBilanz(R, d, 'plan').proQuelle.find((q) => q.quelle.id === 'marriott')!
+    expect(m.einheitenFrei).toBe(2)
+  })
+
+  it('deckelt nach Aufenthalten, nicht nach Punkten', () => {
+    // Vier Moxy-Nächte à 20: nur drei Aufenthalte zählen, also 60 statt 80.
+    const d = daten({
+      boden: [1, 2, 3, 4].map((i) => boden({ korrekturPoints: 20, datum: `2027-0${i}-10` })),
+    })
+    expect(berechneBilanz(R, d, 'plan').gesamt.points).toBe(60)
+  })
+
+  it('deckelt eine teilweise überzählige Gutschrift anteilig', () => {
+    const d = daten({ boden: [boden({ anzahl: 4, korrekturPoints: 80 })] })
+    expect(berechneBilanz(R, d, 'plan').gesamt.points).toBe(60)
+  })
+
+  it('übernimmt eine echte QP-Gutschrift', () => {
+    const d = daten({ boden: [boden({ quelle: 'uptrip', korrekturPoints: 20, korrekturQp: 20 })] })
+    expect(berechneBilanz(R, d, 'plan').gesamt).toEqual({ points: 20, qp: 20 })
+  })
+
+  it('fällt bei unbrauchbarer Gutschrift auf das Regelwerk zurück', () => {
+    const e = { anzahl: 1, freieQp: 0, korrekturPoints: Number.NaN, korrekturQp: null }
+    expect(punkteFuerBodenEintrag(marriott, e, 1)).toEqual({ points: 40, qp: 0 })
+  })
+
+  it('kommt im Verlauf zum selben Ergebnis wie in der Bilanz', () => {
+    const d = daten({
+      boden: [boden({ korrekturPoints: 20, datum: '2027-02-01' }), boden({ datum: '2027-03-01' })],
+    })
+    const verlauf = berechneVerlauf(R, d, FTL, 'plan')
+    expect(verlauf[verlauf.length - 1]!.points).toBe(berechneBilanz(R, d, 'plan').gesamt.points)
+    expect(verlauf.map((v) => v.points)).toEqual([20, 60])
   })
 })

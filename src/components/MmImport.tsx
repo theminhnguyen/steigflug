@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import type { AppDaten, SetDaten } from '../core/types'
+import type { Regelwerk } from '../rules'
 import {
   istMilesAndMoreDatei,
   leseSegmente,
@@ -8,13 +9,37 @@ import {
   type Leseergebnis,
   type Verschmelzung,
 } from '../import/milesandmore'
+import { istKontoauszug, leseKontoauszug, type Kontoauszug } from '../import/kontoauszug'
 import { datumKurz, menge, zahl } from '../core/format'
+import KontoauszugVorschau from './KontoauszugVorschau'
 
 interface Props {
+  regelwerk: Regelwerk
   daten: AppDaten
   setDaten: SetDaten
   qualifyingCodes: string[]
 }
+
+const FLUGLISTE =
+  'https://api.travelid.lufthansa.com/flightstats/v3/me/segmentList?departureDateRange=10000%20months&size=10000&page=0'
+const KONTOAUSZUG =
+  'https://api.miles-and-more.com/ui-services/v1/me/statement-ui-printer/table?renderVersion=v2'
+
+type Herkunft = { art: 'eingefuegt' } | { art: 'datei'; name: string }
+
+/** „Der eingefügte Text enthält …“ */
+function alsSubjekt(h: Herkunft): string {
+  return h.art === 'datei' ? `„${h.name}“` : 'Der eingefügte Text'
+}
+
+/** „Gefunden im eingefügten Text“ */
+function alsOrt(h: Herkunft): string {
+  return h.art === 'datei' ? `in „${h.name}“` : 'im eingefügten Text'
+}
+
+type Eingelesen =
+  | { art: 'fluege'; inhalt: unknown; herkunft: Herkunft; nummer: number }
+  | { art: 'konto'; auszug: Kontoauszug; herkunft: Herkunft; nummer: number }
 
 /**
  * Lesezeichen, das die Historie auf der Miles-&-More-Seite holt und kopiert.
@@ -42,9 +67,12 @@ const FELD_NAMEN: Record<string, string> = {
  * Vorschau, welche Felder überhaupt Werte hatten, und lässt die Deutung
  * umschalten, statt sie stillschweigend zu unterstellen.
  */
-export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
+export default function MmImport({ regelwerk, daten, setDaten, qualifyingCodes }: Props) {
   const dateiFeld = useRef<HTMLInputElement>(null)
-  const [roh, setRoh] = useState<{ inhalt: unknown; name: string } | null>(null)
+  // Zählt jedes Einlesen hoch, damit die Kontoauszug-Vorschau mit frischer
+  // Zuordnung beginnt, statt die Auswahl vom vorigen Auszug zu behalten.
+  const nummer = useRef(0)
+  const [roh, setRoh] = useState<Eingelesen | null>(null)
   const [gupAlsQp, setGupAlsQp] = useState(true)
   const [meldung, setMeldung] = useState<{ art: 'gut' | 'fehler'; text: string } | null>(null)
   const [eingefuegt, setEingefuegt] = useState('')
@@ -55,7 +83,7 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
     plan: Verschmelzung
     gup: ReturnType<typeof pruefeGupDeutung>
   } | null => {
-    if (!roh) return null
+    if (!roh || roh.art !== 'fluege') return null
     const gelesen = leseSegmente(roh.inhalt, gupAlsQp)
     return {
       gelesen,
@@ -65,30 +93,35 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
   }, [roh, gupAlsQp, daten.fluege, qualifyingCodes])
 
   /** Nimmt den Text entgegen, egal ob aus einer Datei oder eingefügt. */
-  function verarbeite(text: string, herkunft: string) {
+  function verarbeite(text: string, herkunft: Herkunft) {
     setMeldung(null)
+    let inhalt: unknown
     try {
-      const inhalt: unknown = JSON.parse(text)
-      if (!istMilesAndMoreDatei(inhalt)) {
-        setRoh(null)
-        setMeldung({
-          art: 'fehler',
-          text: `${herkunft} enthält keine Miles-&-More-Segmentliste. Es wurde nichts geändert.`,
-        })
-        return
-      }
-      setRoh({ inhalt, name: herkunft })
+      inhalt = JSON.parse(text)
     } catch {
       setRoh(null)
       setMeldung({
         art: 'fehler',
-        text: `${herkunft} ließ sich nicht lesen — vermutlich unvollständig kopiert. Es wurde nichts geändert.`,
+        text: `${alsSubjekt(herkunft)} ließ sich nicht lesen — vermutlich unvollständig kopiert. Es wurde nichts geändert.`,
+      })
+      return
+    }
+    nummer.current += 1
+    if (istMilesAndMoreDatei(inhalt)) {
+      setRoh({ art: 'fluege', inhalt, herkunft, nummer: nummer.current })
+    } else if (istKontoauszug(inhalt)) {
+      setRoh({ art: 'konto', auszug: leseKontoauszug(inhalt), herkunft, nummer: nummer.current })
+    } else {
+      setRoh(null)
+      setMeldung({
+        art: 'fehler',
+        text: `${alsSubjekt(herkunft)} enthält weder die Flughistorie noch den Kontoauszug von Miles & More. Es wurde nichts geändert.`,
       })
     }
   }
 
   async function einlesen(datei: File) {
-    verarbeite(await datei.text(), `„${datei.name}“`)
+    verarbeite(await datei.text(), { art: 'datei', name: datei.name })
     if (dateiFeld.current) dateiFeld.current.value = ''
   }
 
@@ -100,7 +133,7 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
         return
       }
       setEingefuegt(text)
-      verarbeite(text, 'Der eingefügte Text')
+      verarbeite(text, { art: 'eingefuegt' })
     } catch {
       setMeldung({
         art: 'fehler',
@@ -111,23 +144,23 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
 
   function uebernehmen() {
     if (!vorschau) return
-    let neu = 0
-    let ergaenzt = 0
+    const gelesen = vorschau.gelesen.fluege
     setDaten((d) => {
       // Bewusst hier noch einmal zusammengeführt statt mit dem Ergebnis der
       // Vorschau: Zwischen Anzeige und Klick kann sich der Bestand geändert
       // haben, und die Vorschau kannte ihn noch nicht.
-      const plan = verschmelze(d.fluege, vorschau.gelesen.fluege)
-      neu = plan.neu.length
-      ergaenzt = plan.aktualisiert.length
+      const plan = verschmelze(d.fluege, gelesen)
       const nachId = new Map(plan.aktualisiert.map((f) => [f.id, f]))
       return { ...d, fluege: [...d.fluege.map((f) => nachId.get(f.id) ?? f), ...plan.neu] }
     })
     setRoh(null)
     setEingefuegt('')
+    // Die Zahlen kommen aus der Vorschau, nicht aus der Funktion oben: React
+    // führt sie nicht zwingend sofort aus — eine dort gesetzte Variable stünde
+    // beim Melden womöglich noch auf null.
     setMeldung({
       art: 'gut',
-      text: `${menge(neu, 'Flug', 'Flüge')} neu übernommen, ${menge(ergaenzt, 'Eintrag', 'Einträge')} ergänzt.`,
+      text: `${menge(vorschau.plan.neu.length, 'Flug', 'Flüge')} neu übernommen, ${menge(vorschau.plan.aktualisiert.length, 'Eintrag', 'Einträge')} ergänzt.`,
     })
   }
 
@@ -135,10 +168,10 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
     <section className="karte">
       <h2>Aus Miles &amp; More einlesen</h2>
       <p className="unter">
-        Dein Konto hat keinen Export-Knopf, rückt die eigene Flughistorie aber heraus,
-        wenn man weiß wo. Damit kommen die{' '}
+        Dein Konto hat keinen Export-Knopf, rückt Flughistorie und Kontoauszug aber
+        heraus, wenn man weiß wo. Damit kommen die{' '}
         <strong>tatsächlich gutgeschriebenen</strong> Punkte in die App statt meiner
-        Berechnung.
+        Berechnung — beim Kontoauszug auch Uptrip, Marriott und Kreditkarte.
       </p>
 
       <ol className="anleitung">
@@ -150,15 +183,16 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
           anmelden.
         </li>
         <li>
-          Im <strong>selben Browser</strong>{' '}
-          <a
-            href="https://api.travelid.lufthansa.com/flightstats/v3/me/segmentList?departureDateRange=10000%20months&size=10000&page=0"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            diese Adresse
+          Im <strong>selben Browser</strong> eine der beiden Adressen öffnen:{' '}
+          <a href={FLUGLISTE} target="_blank" rel="noopener noreferrer">
+            Flughistorie
           </a>{' '}
-          öffnen. Es erscheint eine lange Textwand — das ist richtig so.
+          oder{' '}
+          <a href={KONTOAUSZUG} target="_blank" rel="noopener noreferrer">
+            Kontoauszug
+          </a>{' '}
+          (Uptrip, Marriott, Kreditkarte). Es erscheint eine lange Textwand — das ist
+          richtig so.
         </li>
         <li>
           Alles markieren und kopieren: am Mac <kbd>⌘ A</kbd>, dann <kbd>⌘ C</kbd>. Am
@@ -173,11 +207,11 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
           id="mm-text"
           rows={3}
           spellCheck={false}
-          placeholder={'{"SegmentListResponses":[ … ]}'}
+          placeholder="Flughistorie oder Kontoauszug hier einfügen …"
           value={eingefuegt}
           onChange={(e) => {
             setEingefuegt(e.target.value)
-            if (e.target.value.trim()) verarbeite(e.target.value, 'Der eingefügte Text')
+            if (e.target.value.trim()) verarbeite(e.target.value, { art: 'eingefuegt' })
             else setRoh(null)
           }}
         />
@@ -205,7 +239,7 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
       {vorschau && (
         <div className="vorschau">
           <p className="abschnitt-titel" style={{ marginTop: 'var(--s4)' }}>
-            Gefunden in „{roh?.name}“
+            Gefunden {roh && alsOrt(roh.herkunft)}
           </p>
 
           <div className="chips" style={{ marginBottom: 'var(--s3)' }}>
@@ -318,6 +352,24 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
         </div>
       )}
 
+      {roh?.art === 'konto' && (
+        <KontoauszugVorschau
+          key={roh.nummer}
+          auszug={roh.auszug}
+          ort={alsOrt(roh.herkunft)}
+          regelwerk={regelwerk}
+          daten={daten}
+          setDaten={setDaten}
+          schliessen={(text) => {
+            setRoh(null)
+            if (text) {
+              setEingefuegt('')
+              setMeldung({ art: 'gut', text })
+            }
+          }}
+        />
+      )}
+
       {meldung && (
         <div className="merker" style={{ marginTop: 'var(--s4)', marginBottom: 0 }}>
           <span aria-hidden="true">{meldung.art === 'gut' ? '✅' : '⚠️'}</span>
@@ -404,9 +456,9 @@ export default function MmImport({ daten, setDaten, qualifyingCodes }: Props) {
       </div>
 
       <p className="quellen" style={{ marginTop: 'var(--s4)' }}>
-        Der Endpunkt gehört nicht zu einer offiziellen Schnittstelle und kann sich ohne
-        Ankündigung ändern. Er liefert <strong>geflogene</strong> Segmente — gebuchte
-        Reisen in der Zukunft stehen dort noch nicht.
+        Beide Adressen gehören nicht zu einer offiziellen Schnittstelle und können sich
+        ohne Ankündigung ändern. Die Flughistorie liefert <strong>geflogene</strong>{' '}
+        Segmente — gebuchte Reisen in der Zukunft stehen dort noch nicht.
       </p>
     </section>
   )
