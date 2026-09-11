@@ -4,6 +4,7 @@ import type { Regelwerk } from '../rules'
 import { alleAirlines } from '../rules'
 import {
   KARTEN_ARTEN,
+  erwarteteKarten,
   kartenUebersicht,
   kartenVorschlaege,
   kollektionsStand,
@@ -121,6 +122,10 @@ export default function Uptrip({ regelwerk, daten, setDaten }: Props) {
   const vorschlaege = useMemo(
     () => kartenVorschlaege(daten.fluege, daten.uptripKarten, namen, heute),
     [daten.fluege, daten.uptripKarten, namen, heute],
+  )
+  const erwartet = useMemo(
+    () => erwarteteKarten(daten.fluege, namen, heute, regelwerk.uptrip.kartenJeSegment),
+    [daten.fluege, namen, heute, regelwerk.uptrip.kartenJeSegment],
   )
 
   const gruppen = useMemo(() => {
@@ -279,6 +284,12 @@ export default function Uptrip({ regelwerk, daten, setDaten }: Props) {
             Kollektionen aufgegangen.
           </p>
         )}
+        {erwartet.karten > 0 && (
+          <p className="zusatz">
+            Mit deinen geplanten Flügen kommen voraussichtlich{' '}
+            {menge(erwartet.karten, 'Originalkarte', 'Originalkarten')} dazu.
+          </p>
+        )}
       </section>
 
       {weg && (
@@ -289,24 +300,25 @@ export default function Uptrip({ regelwerk, daten, setDaten }: Props) {
               ? 'Vollständig — du kannst die Belohnung in der Uptrip-App einlösen.'
               : `${zahl(weg.stand.kollektion.benoetigt)} Karten, davon mindestens ${zahl(weg.stand.mindestOriginale)} Originale aus eigenen Flügen.`}
           </p>
-          {weg.stand.mindestOriginale > 0 && (
-            <Balken
-              name="Originale"
-              ist={weg.stand.originale}
-              plan={weg.originaleMitPlanung}
-              ziel={weg.stand.mindestOriginale}
-            />
-          )}
+          {/* Reihenfolge wie in der Uptrip-App: erst die Karten, dann die Originale. */}
           <Balken
-            name="Karten insgesamt"
+            name="Karten"
             ist={weg.stand.angerechnet}
             plan={Math.min(
               weg.stand.kollektion.benoetigt,
               weg.stand.angerechnet + (weg.originaleMitPlanung - weg.stand.originale),
             )}
             ziel={weg.stand.kollektion.benoetigt}
-            variante="qp"
           />
+          {weg.stand.mindestOriginale > 0 && (
+            <Balken
+              name="davon Originale"
+              ist={weg.stand.originale}
+              plan={weg.originaleMitPlanung}
+              ziel={weg.stand.mindestOriginale}
+              variante="qp"
+            />
+          )}
           {!weg.stand.vollstaendig && (
             <p className="unter" style={{ margin: 'var(--s4) 0 0' }}>
               {weg.stand.fehlendeOriginale > 0 &&
@@ -716,6 +728,50 @@ export default function Uptrip({ regelwerk, daten, setDaten }: Props) {
               </div>
             </div>
           ))
+        )}
+      </section>
+
+      <section className="karte">
+        <h2>Erwartete Karten</h2>
+        {erwartet.karten === 0 ? (
+          <div className="leer">
+            Keine geplanten Flüge. Trag gebuchte Reisen unter „Flüge“ als geplant ein, dann
+            stehen hier die Karten, die sie in Uptrip bringen.
+          </div>
+        ) : (
+          <>
+            <p className="unter">
+              Je Flug bietet Uptrip Start, Ziel, Airline und Flugzeug an; du wählst{' '}
+              {zahl(erwartet.jeFlug)} davon, alle als Originale. Ist ein Flug geflogen,
+              schlägt Steigflug seine Karten oben zum Eintragen vor.
+            </p>
+            {erwartet.jahre.map((j) => (
+              <div key={j.jahr}>
+                <p className="abschnitt-titel" style={{ marginTop: 'var(--s4)' }}>
+                  {j.jahr} · {menge(j.karten, 'Originalkarte', 'Originalkarten')}
+                </p>
+                <div className="liste">
+                  {j.fluege.map(({ flug, auswahl }) => (
+                    <div className="zeile ist-geplant" key={flug.id}>
+                      <div className="zeile-haupt">
+                        <div className="zeile-titel">
+                          {flug.von} → {flug.nach}
+                        </div>
+                        <div className="zeile-neben">
+                          {datumKurz(flug.datum)} · zur Wahl:{' '}
+                          {auswahl.map((a) => a.name || 'Flugzeug').join(', ')}
+                        </div>
+                      </div>
+                      <div className="punkte-block">
+                        <b>+{zahl(erwartet.jeFlug)}</b>
+                        <span className="keine-qp">Originale</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
         )}
       </section>
     </>

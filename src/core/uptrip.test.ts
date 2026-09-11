@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   alsKartenArt,
+  erwarteteKarten,
   kartenUebersicht,
   kartenVorschlaege,
   kollektionsStand,
@@ -238,7 +239,7 @@ describe('uptripWegSatz', () => {
 
   it('beschreibt deinen echten Stand samt Vergleich mit dem Punkteweg', () => {
     expect(uptripWegSatz(weg([...viele(4), ...viele(6, { original: false })]), 13)).toBe(
-      '4 von 40 Originalen und 6 von 10 weiteren Karten. Es fehlen noch mindestens 18 Flugsegmente — über die Punkte sind es rund 13.',
+      '10 von 50 Karten, davon 4 Originale (mindestens 40 nötig). Es fehlen noch mindestens 18 Flugsegmente — über die Punkte sind es rund 13.',
     )
   })
 
@@ -249,6 +250,10 @@ describe('uptripWegSatz', () => {
 
   it('spricht bei einem einzigen Segment in der Einzahl', () => {
     expect(uptripWegSatz(weg(viele(38)), null)).toContain('mindestens 1 Flugsegment.')
+  })
+
+  it('spricht bei einem einzigen Original in der Einzahl', () => {
+    expect(uptripWegSatz(weg([karte()]), null)).toContain('davon 1 Original (')
   })
 
   it('sagt nicht „0 Flugsegmente“, wenn nur noch beliebige Karten fehlen', () => {
@@ -265,5 +270,83 @@ describe('uptripWegSatz', () => {
 
   it('meldet eine vollständige Kollektion', () => {
     expect(uptripWegSatz(weg([...viele(40), ...viele(10, { original: false })]), 13)).toContain('Vollständig')
+  })
+})
+
+describe('erwarteteKarten', () => {
+  const namen = {
+    stadt: (c: string) => ({ DUS: 'Düsseldorf', MUC: 'München', BER: 'Berlin' })[c] ?? c,
+    airline: (c: string) => ({ EW: 'Eurowings', LH: 'Lufthansa' })[c] ?? c,
+  }
+  const geplant = (o: Partial<Flug>) => flug({ geplant: true, ...o })
+
+  it('bringt je geplantem Flug zwei Originalkarten', () => {
+    const e = erwarteteKarten(
+      [geplant({ datum: '2026-10-26' }), geplant({ datum: '2026-10-29' })],
+      namen,
+      '2026-09-11',
+      2,
+    )
+    expect(e.karten).toBe(4)
+    expect(e.jeFlug).toBe(2)
+  })
+
+  it('zählt einen Flug von heute mit, einen von gestern nicht', () => {
+    const e = erwarteteKarten(
+      [geplant({ datum: '2026-09-11' }), geplant({ datum: '2026-09-10' })],
+      namen,
+      '2026-09-11',
+      2,
+    )
+    expect(e.karten).toBe(2)
+    expect(e.jahre[0]!.fluege[0]!.flug.datum).toBe('2026-09-11')
+  })
+
+  it('übergeht geflogene und gelöschte Flüge', () => {
+    const e = erwarteteKarten(
+      [flug({ datum: '2026-10-26' }), geplant({ datum: '2026-10-26', geloescht: true })],
+      namen,
+      '2026-09-11',
+      2,
+    )
+    expect(e.karten).toBe(0)
+    expect(e.jahre).toHaveLength(0)
+  })
+
+  it('ordnet Umsteigeverbindungen am selben Tag in Reisereihenfolge', () => {
+    const e = erwarteteKarten(
+      [
+        geplant({ datum: '2026-10-26', von: 'MUC', nach: 'BER', airline: 'LH' }),
+        geplant({ datum: '2026-10-26', von: 'DUS', nach: 'MUC', airline: 'EW' }),
+      ],
+      namen,
+      '2026-09-11',
+      2,
+    )
+    expect(e.jahre[0]!.fluege.map((x) => `${x.flug.von}-${x.flug.nach}`)).toEqual(['DUS-MUC', 'MUC-BER'])
+  })
+
+  it('bietet Start, Ziel, Airline und ein Flugzeug ohne bekannten Typ an', () => {
+    const e = erwarteteKarten([geplant({ datum: '2026-10-26', von: 'DUS', nach: 'MUC', airline: 'EW' })], namen, '2026-09-11', 2)
+    expect(e.jahre[0]!.fluege[0]!.auswahl).toEqual([
+      { name: 'Düsseldorf', art: 'stadt' },
+      { name: 'München', art: 'stadt' },
+      { name: 'Eurowings', art: 'airline' },
+      { name: '', art: 'flugzeug' },
+    ])
+  })
+
+  it('gruppiert nach Jahr, frühestes zuerst', () => {
+    const e = erwarteteKarten(
+      [geplant({ datum: '2027-03-01' }), geplant({ datum: '2026-11-20' }), geplant({ datum: '2026-11-24' })],
+      namen,
+      '2026-09-11',
+      2,
+    )
+    expect(e.jahre.map((j) => [j.jahr, j.karten])).toEqual([['2026', 4], ['2027', 2]])
+  })
+
+  it('rechnet mit mindestens einer Karte, auch wenn das Regelwerk null sagt', () => {
+    expect(erwarteteKarten([geplant({ datum: '2026-10-26' })], namen, '2026-09-11', 0).karten).toBe(1)
   })
 })

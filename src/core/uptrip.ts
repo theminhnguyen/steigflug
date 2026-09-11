@@ -1,5 +1,6 @@
 import type { Flug, KartenArt, UptripKarte, UptripKollektion } from './types'
 import { menge } from './format'
+import { sortiereSegmente } from './reihenfolge'
 
 /**
  * Sammelalbum für die Uptrip-App.
@@ -125,6 +126,11 @@ export interface UptripWeg {
   originaleMitPlanung: number
 }
 
+/** Geplante Flüge ab heute — daraus entstehen die Karten, die noch kommen. */
+function geplanteAb(fluege: Flug[], heute: string): Flug[] {
+  return fluege.filter((f) => !f.geloescht && f.geplant && f.datum >= heute)
+}
+
 /**
  * Wie weit der Status über die Uptrip-Kollektion ist. Liefert nichts, wenn
  * es keine offene Kollektion gibt, die den Status bringt.
@@ -141,7 +147,7 @@ export function uptripWeg(
   const stand = kollektionsStand(k, karten)
   // Das Regelwerk lässt eine Null zu; durch null teilen hieße „unendlich viele Segmente“.
   const je = Math.max(1, kartenJeSegment)
-  const geplanteSegmente = fluege.filter((f) => !f.geloescht && f.geplant && f.datum >= heute).length
+  const geplanteSegmente = geplanteAb(fluege, heute).length
   return {
     stand,
     segmenteNoetig: Math.ceil(stand.fehlendeOriginale / je),
@@ -161,12 +167,13 @@ export function uptripWegSatz(weg: UptripWeg, punkteSegmente: number | null): st
   const s = weg.stand
   if (s.vollstaendig) return 'Vollständig — du kannst die Belohnung in der Uptrip-App einlösen.'
 
-  const platzFuerWeitere = s.kollektion.benoetigt - s.mindestOriginale
+  // Wie in der Uptrip-App: die Kartenzahl vorn („10/50“), die Originale dahinter.
+  // Mit den Originalen vorn las sich „4 von 40“ wie die Zahl der Karten.
   const stand =
-    s.mindestOriginale > 0
-      ? `${s.originale} von ${s.mindestOriginale} Originalen` +
-        (platzFuerWeitere > 0 ? ` und ${s.weitereAngerechnet} von ${platzFuerWeitere} weiteren Karten` : '')
-      : `${s.angerechnet} von ${s.kollektion.benoetigt} Karten`
+    `${s.angerechnet} von ${s.kollektion.benoetigt} Karten` +
+    (s.mindestOriginale > 0
+      ? `, davon ${menge(s.originale, 'Original', 'Originale')} (mindestens ${s.mindestOriginale} nötig)`
+      : '')
 
   if (weg.segmenteNoetig === 0) {
     return `${stand}. Es fehlen nur noch ${menge(s.fehlendeBeliebige, 'beliebige Karte', 'beliebige Karten')}.`
@@ -228,4 +235,67 @@ export function kartenVorschlaege(
     }
   }
   return vorschlaege
+}
+
+/* ---------- Erwartete Karten aus geplanten Flügen ---------- */
+
+export interface ErwarteterFlug {
+  flug: Flug
+  /**
+   * Was Uptrip für diesen Flug zur Wahl stellt: Start, Ziel, Airline und
+   * Flugzeug. Den Flugzeugtyp kennt Steigflug nicht — dort bleibt der Name leer.
+   */
+  auswahl: { name: string; art: KartenArt }[]
+}
+
+export interface ErwartetesJahr {
+  jahr: string
+  fluege: ErwarteterFlug[]
+  karten: number
+}
+
+export interface ErwarteteKarten {
+  jahre: ErwartetesJahr[]
+  /** Originalkarten aus allen geplanten Flügen zusammen */
+  karten: number
+  /** Karten, die man je Flug wählt */
+  jeFlug: number
+}
+
+/**
+ * Die Karten, die die geplanten Flüge in Uptrip bringen werden.
+ *
+ * Bewusst abgeleitet statt gespeichert: Als echte Karten eingetragen stünde im
+ * Album eine Zahl, die der Nutzer gar nicht hat, und jede Umbuchung ließe
+ * Karteileichen zurück. So stimmt die Liste von selbst. Ist ein Flug geflogen,
+ * fällt er hier heraus und erscheint bei den Vorschlägen zum Eintragen.
+ */
+export function erwarteteKarten(
+  fluege: Flug[],
+  namen: Namen,
+  heute: string,
+  kartenJeSegment: number,
+): ErwarteteKarten {
+  const je = Math.max(1, kartenJeSegment)
+  const jahre: ErwartetesJahr[] = []
+  // Aufsteigend und je Tag in Reisereihenfolge — alles liegt ab heute.
+  for (const flug of sortiereSegmente(geplanteAb(fluege, heute), heute)) {
+    const jahr = flug.datum.slice(0, 4)
+    let gruppe = jahre[jahre.length - 1]
+    if (!gruppe || gruppe.jahr !== jahr) {
+      gruppe = { jahr, fluege: [], karten: 0 }
+      jahre.push(gruppe)
+    }
+    gruppe.fluege.push({
+      flug,
+      auswahl: [
+        { name: namen.stadt(flug.von), art: 'stadt' },
+        { name: namen.stadt(flug.nach), art: 'stadt' },
+        { name: namen.airline(flug.airline), art: 'airline' },
+        { name: '', art: 'flugzeug' },
+      ],
+    })
+    gruppe.karten += je
+  }
+  return { jahre, karten: jahre.reduce((s, j) => s + j.karten, 0), jeFlug: je }
 }

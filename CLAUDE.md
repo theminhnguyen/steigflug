@@ -295,6 +295,13 @@ Das Album wird deshalb von Hand gepflegt: `src/core/uptrip.ts` rechnet,
 - **Die Punkte einer Kollektion zählen nicht aus dem Album.** Sie kommen über
   den Kontoauszug-Import, sobald Miles & More sie gutschreibt; beides zu
   zählen wäre doppelt.
+- **Anzeige wie die App: Kartenzahl vorn.** Uptrip zeigt „10/50“ groß und die
+  Originale klein daneben. Mit den Originalen vorn („4 von 40“) meldete der
+  Nutzer, er müsse doch 10 Karten haben — die Zahl stimmte, die Reihenfolge nicht.
+- **Erwartete Karten werden abgeleitet, nicht gespeichert.** `erwarteteKarten()`
+  rechnet sie aus den geplanten Flügen ab heute. Als echte Karten eingetragen
+  stünde eine Zahl im Album, die der Nutzer nicht hat, und jede Umbuchung ließe
+  Karteileichen zurück.
 - **Karten eingelöster Kollektionen sind verbraucht**, Karten gelöschter
   Kollektionen wieder frei.
 - **Programmregeln im Regelwerk** (`uptrip`): Karten je Segment und die Vorlage
