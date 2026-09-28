@@ -242,7 +242,7 @@
       "pointsProEinheit": 40,
       "qpProEinheit": 0,
       "maxPointsProJahr": 40,
-      "hinweis": "Einmalig 40 Points für die Miles & More Gold Credit Card. Wichtig: Der Bonus gilt nur, wenn du zum Zeitpunkt der Beantragung noch KEINEN Vielfliegerstatus hast – also vor dem FTL beantragen. Angebot läuft nach aktuellem Stand bis 31.12.2026."
+      "hinweis": "Einmalig 40 Points für eine neue Miles & More Kreditkarte – Blue wie Gold. Aktion für Anträge vom 01.07. bis 31.12.2026, nur wenn in den letzten 12 Monaten keine Miles & More Karte der Deutschen Bank auf dich lief. Gutschrift nach der ersten Kartenabrechnung; bei Kündigung in den ersten 12 Monaten wird sie wieder abgezogen. Bei der Gold-Karte gilt zusätzlich: nur ohne bestehenden Vielfliegerstatus."
     },
     {
       "id": "kk-meilentausch",
@@ -308,9 +308,9 @@
   "termine": [
     {
       "id": "kk-willkommen-ende",
-      "titel": "Willkommensbonus der Gold-Karte",
+      "titel": "Willkommensbonus der Kreditkarte",
       "datum": "2026-12-31",
-      "hinweis": "40 Points einmalig. Bedingung: zum Zeitpunkt der Beantragung noch KEIN Vielfliegerstatus — also vor dem FTL beantragen. Gutgeschrieben wird nach der ersten Kartenabrechnung, das braucht Vorlauf."
+      "hinweis": "40 Points einmalig für eine bis 31.12.2026 beantragte Blue- oder Gold-Karte. Gutgeschrieben wird nach der ersten Kartenabrechnung, das braucht Vorlauf."
     }
   ]
 }
